@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import Quiz from './Quiz.jsx';
 import Result from './Result.jsx';
-import { computePrice, formatPriceRange } from './pricing.js';
+import PriceSidebar from './PriceSidebar.jsx';
 
 const STEPS = ['video_typ', 'output_paket', 'video_laenge', 'features', 'zeitrahmen', 'kontext', 'lead'];
 
@@ -18,19 +18,13 @@ export default function App({ theme = 'dark' }) {
     website: '',
     ziel: '',
   });
-  const [lead, setLead] = useState({ vorname: '', email: '', marketing_opt_in: false });
+  const [lead, setLead] = useState({ name: '', email: '', marketing_opt_in: false });
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
 
   const total = STEPS.length;
-  const progress = useMemo(() => Math.round((step / total) * 100), [step, total]);
-
-  // Live-Preis-Berechnung: greift, sobald video_typ + output_paket gewählt sind
-  const livePrice = useMemo(() => {
-    if (!answers.video_typ || !answers.output_paket) return null;
-    return computePrice(answers);
-  }, [answers]);
+  const progress = Math.round((step / total) * 100);
 
   function next() { setStep((s) => Math.min(s + 1, total)); }
   function back() { setStep((s) => Math.max(0, s - 1)); }
@@ -51,6 +45,10 @@ export default function App({ theme = 'dark' }) {
         });
       }
 
+      // Website: User kann "deine-firma.de" oder "https://deine-firma.de"
+      // eingeben. Wir normalisieren auf der Client-Seite, falls möglich.
+      const normalizedWebsite = normalizeWebsite(answers.website);
+
       const response = await fetch(config.restUrl, {
         method: 'POST',
         headers: {
@@ -59,7 +57,7 @@ export default function App({ theme = 'dark' }) {
         },
         body: JSON.stringify({
           lead,
-          quiz: answers,
+          quiz: { ...answers, website: normalizedWebsite },
           tracking: config.tracking || {},
           recaptcha_token: recaptchaToken,
         }),
@@ -98,26 +96,33 @@ export default function App({ theme = 'dark' }) {
         <div className="wgk__progress-bar" style={{ width: `${progress}%` }} />
       </div>
 
-      {livePrice && (
-        <div className="wgk__livepricepill" aria-live="polite">
-          <span className="wgk__livepricepill-label">Aktueller Investitionsrahmen</span>
-          <strong className="wgk__livepricepill-value">{formatPriceRange(livePrice)}</strong>
+      <div className="wgk__layout">
+        <div className="wgk__layout-main">
+          <Quiz
+            step={step}
+            steps={STEPS}
+            answers={answers}
+            setAnswers={setAnswers}
+            lead={lead}
+            setLead={setLead}
+            onNext={next}
+            onBack={back}
+            onSubmit={submit}
+            submitting={submitting}
+            error={error}
+          />
         </div>
-      )}
-
-      <Quiz
-        step={step}
-        steps={STEPS}
-        answers={answers}
-        setAnswers={setAnswers}
-        lead={lead}
-        setLead={setLead}
-        onNext={next}
-        onBack={back}
-        onSubmit={submit}
-        submitting={submitting}
-        error={error}
-      />
+        <div className="wgk__layout-side">
+          <PriceSidebar answers={answers} />
+        </div>
+      </div>
     </div>
   );
+}
+
+function normalizeWebsite(raw) {
+  const v = (raw || '').trim();
+  if (!v) return '';
+  if (/^https?:\/\//i.test(v)) return v;
+  return 'https://' + v.replace(/^\/+/, '');
 }

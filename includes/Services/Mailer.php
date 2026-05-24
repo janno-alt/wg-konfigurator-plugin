@@ -18,7 +18,8 @@ final class Mailer {
 
     public function send_customer( array $lead, array $pdf, array $concept ): bool {
         $settings = Settings::get();
-        $subject  = sprintf( '%s, dein Videokonzept ist da', $lead['vorname'] ?? '' );
+        $vorname  = $lead['vorname'] ?: ( $lead['name'] ?? '' );
+        $subject  = sprintf( '%s, dein Videokonzept ist da', $vorname );
 
         $html = $this->render_template( 'email-customer.php', [
             'lead'    => $lead,
@@ -40,10 +41,11 @@ final class Mailer {
 
     public function send_admin( array $lead, array $quiz, array $pricing, array $pdf ): bool {
         $settings = Settings::get();
+        $name     = $lead['name'] ?: ( $lead['vorname'] ?? '–' );
         $subject  = sprintf(
             '[Konfigurator] Neuer Lead · %s · %s',
-            $lead['vorname'] ?? '–',
-            $lead['email']   ?? '–'
+            $name,
+            $lead['email'] ?? '–'
         );
 
         $html = $this->render_template( 'email-admin.php', [

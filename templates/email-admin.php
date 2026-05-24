@@ -22,7 +22,7 @@ $fmt = static fn( $n ) => number_format( (int) $n, 0, ',', '.' ) . ' €';
 
     <h3 style="margin:18px 0 6px;">Kontakt</h3>
     <table cellpadding="4" cellspacing="0" style="font-size:13px;border-collapse:collapse;">
-        <tr><td><strong>Vorname</strong></td><td><?php echo esc_html( $lead['vorname'] ?? '' ); ?></td></tr>
+        <tr><td><strong>Name</strong></td><td><?php echo esc_html( $lead['name'] ?? ( $lead['vorname'] ?? '' ) ); ?></td></tr>
         <tr><td><strong>E-Mail</strong></td><td><a href="mailto:<?php echo esc_attr( $lead['email'] ?? '' ); ?>"><?php echo esc_html( $lead['email'] ?? '' ); ?></a></td></tr>
         <tr><td><strong>Marketing-Opt-In</strong></td><td><?php echo ! empty( $lead['marketing_opt_in'] ) ? 'Ja' : 'Nein'; ?></td></tr>
     </table>

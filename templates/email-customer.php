@@ -20,7 +20,7 @@ $dark  = (string) ( $settings['pdf_bg_color']    ?? '#141414' );
             <tr><td style="background:<?php echo esc_attr( $dark ); ?>;padding:28px 28px 20px;">
                 <div style="height:4px;width:60px;background:<?php echo esc_attr( $brand ); ?>;margin-bottom:14px;"></div>
                 <h1 style="margin:0;color:#fff;font-size:24px;line-height:1.2;">
-                    Hi <?php echo esc_html( $lead['vorname'] ?? '' ); ?>,<br>
+                    Hi <?php echo esc_html( $lead['vorname'] ?: ( $lead['name'] ?? '' ) ); ?>,<br>
                     <span style="color:<?php echo esc_attr( $brand ); ?>;">dein Videokonzept ist da.</span>
                 </h1>
             </td></tr>

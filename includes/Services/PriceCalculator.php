@@ -29,12 +29,11 @@ final class PriceCalculator {
         'extra_long' => 1.40,  // Erklärvideo – Drehbuch + Animation
     ];
 
+    /** Untertitel & lizenzierte Musik sind Standard und im Basispreis enthalten. */
     private const FEATURE_PRICE = [
         'voiceover'    => 290,
-        'untertitel'   => 190,
         'animation'    => 450,
         'drohne'       => 590,
-        'musik'        => 150,
         'mehrsprachig' => 390,
     ];
 
@@ -149,10 +148,8 @@ final class PriceCalculator {
     public static function feature_labels( array $ids ): array {
         $map = [
             'voiceover'    => 'Voiceover / Sprecher:in',
-            'untertitel'   => 'Untertitel',
             'animation'    => 'Animierte Texte / Lower-Thirds',
             'drohne'       => 'Drohnen-Aufnahmen',
-            'musik'        => 'Lizenzierte Musik',
             'mehrsprachig' => 'Mehrsprachige Versionen',
         ];
         $out = [];

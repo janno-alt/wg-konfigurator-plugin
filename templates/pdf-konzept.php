@@ -125,7 +125,7 @@ $length_label = [
     <span class="accent-bar"></span>
     <h1>Dein individuelles<br><span class="accent">Videokonzept</span></h1>
     <p style="font-size:14pt; color:#CCC; margin-top:14pt;">
-        Erstellt für <strong><?php echo esc_html( $lead['vorname'] ?? '–' ); ?></strong>
+        Erstellt für <strong><?php echo esc_html( $lead['name'] ?: ( $lead['vorname'] ?? '–' ) ); ?></strong>
         am <?php echo esc_html( $today ); ?>.
     </p>
     <div class="cover-meta">
@@ -179,15 +179,33 @@ $length_label = [
     </div>
 </div>
 
-<!-- ============== SEITE 3: Story-Skizze ============== -->
+<!-- ============== SEITE 3: Unternehmens-Analyse + Botschaften ============== -->
 <div class="page">
     <span class="accent-bar"></span>
-    <h2>Story-Skizze</h2>
+    <h2>Was dich auszeichnet</h2>
     <p style="line-height:1.7;">
-        <?php echo nl2br( esc_html( (string) ( $concept['story_skizze'] ?? '–' ) ) ); ?>
+        <?php echo nl2br( esc_html( (string) ( $concept['unternehmens_analyse'] ?? '–' ) ) ); ?>
     </p>
 
-    <h3>Empfohlene Protagonist:innen</h3>
+    <h3>Das sollte im Video herausgestellt werden</h3>
+    <ul>
+        <?php foreach ( (array) ( $concept['video_botschaften'] ?? [] ) as $b ) : ?>
+            <li><?php echo esc_html( (string) $b ); ?></li>
+        <?php endforeach; ?>
+    </ul>
+
+    <div class="footer">
+        Konzept <?php echo esc_html( $today ); ?>
+        <span class="right">Seite 3</span>
+    </div>
+</div>
+
+<!-- ============== SEITE 4: Protagonist:innen + Locations ============== -->
+<div class="page">
+    <span class="accent-bar"></span>
+    <h2>Wer und wo</h2>
+
+    <h3 style="margin-top:0;">Empfohlene Protagonist:innen</h3>
     <ul>
         <?php foreach ( (array) ( $concept['empfohlene_protagonisten'] ?? [] ) as $p ) : ?>
             <li><?php echo esc_html( (string) $p ); ?></li>
@@ -203,11 +221,11 @@ $length_label = [
 
     <div class="footer">
         Konzept <?php echo esc_html( $today ); ?>
-        <span class="right">Seite 3</span>
+        <span class="right">Seite 4</span>
     </div>
 </div>
 
-<!-- ============== SEITE 4: Vorbereitungs-Checkliste ============== -->
+<!-- ============== SEITE 5: Vorbereitungs-Checkliste ============== -->
 <div class="page">
     <span class="accent-bar"></span>
     <h2>Vorbereitungs-Checkliste</h2>
@@ -223,11 +241,11 @@ $length_label = [
 
     <div class="footer">
         Konzept <?php echo esc_html( $today ); ?>
-        <span class="right">Seite 4</span>
+        <span class="right">Seite 5</span>
     </div>
 </div>
 
-<!-- ============== SEITE 5: Ablauf ============== -->
+<!-- ============== SEITE 6: Ablauf ============== -->
 <div class="page">
     <span class="accent-bar"></span>
     <h2>Ablauf in 4 Schritten</h2>
@@ -243,18 +261,18 @@ $length_label = [
     <ul>
         <li>Konzept-Workshop + Drehbuch</li>
         <li>Drehtag(e) mit eigenem Profi-Equipment (Kamera, Licht, Funkmikrofone)</li>
-        <li>Schnitt inkl. Branding, Untertiteln, plattformgerechtem Export</li>
+        <li>Schnitt inkl. Branding, Untertiteln, lizenzierter Musik, plattformgerechtem Export</li>
         <li>1 Feedback-Schleife</li>
         <li>Rohmaterial auf Anfrage</li>
     </ul>
 
     <div class="footer">
         Konzept <?php echo esc_html( $today ); ?>
-        <span class="right">Seite 5</span>
+        <span class="right">Seite 6</span>
     </div>
 </div>
 
-<!-- ============== SEITE 6: Warum WG ============== -->
+<!-- ============== SEITE 7: Warum WG ============== -->
 <div class="page">
     <span class="accent-bar"></span>
     <h2>Warum WG-Digital</h2>
@@ -273,11 +291,11 @@ $length_label = [
 
     <div class="footer">
         Konzept <?php echo esc_html( $today ); ?>
-        <span class="right">Seite 6</span>
+        <span class="right">Seite 7</span>
     </div>
 </div>
 
-<!-- ============== SEITE 7: Nächste Schritte / CTA ============== -->
+<!-- ============== SEITE 8: Nächste Schritte / CTA ============== -->
 <div class="page">
     <span class="accent-bar"></span>
     <h2>Lass uns reden</h2>
@@ -306,7 +324,7 @@ $length_label = [
 
     <div class="footer">
         Konzept <?php echo esc_html( $today ); ?>
-        <span class="right">Seite 7</span>
+        <span class="right">Seite 8</span>
     </div>
 </div>
 

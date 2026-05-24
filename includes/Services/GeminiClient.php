@@ -169,10 +169,9 @@ AUSZUG AUS DER KUNDEN-WEBSITE (gescraped):
 
 ---
 
-DEINE AUFGABE – erstelle ein konkretes Konzept im JSON-Schema. Konkret bedeutet:
-NICHT "wir zeigen das Team in ihrer Umgebung", SONDERN "Frühschicht 6:30 Uhr,
-die Geschäftsführerin betritt die Werkstatt, klopft dem Vorarbeiter auf die
-Schulter – wir hören das Anlassen der ersten Maschinen."
+DEINE AUFGABE – analysiere das Unternehmen und leite ab, welche Punkte im
+gewünschten Video herausgestellt werden sollten. Keine konkrete Story erfinden!
+Wir wollen ANALYSE, nicht Drehbuch.
 
 Felder:
 
@@ -181,42 +180,63 @@ Felder:
    Beispiel: "Pflegekräfte in Sachsen-Anhalt sehen sich in deinem Team wieder
    und melden sich aktiv für ein Kennenlern-Gespräch."
 
-2. "story_skizze" (4–6 Sätze):
-   Konkreter Story-Bogen: Eröffnung (Bild), Mittelteil (Konflikt/Mehrwert),
-   Auflösung (Versprechen). Bild-Ideen statt Adjektiv-Wolken.
-   Berücksichtige die Video-Länge: bei 15–30s nur EIN Bild + EIN Punch,
-   bei 2–3 min Storyboard mit drei Akten.
+2. "unternehmens_analyse" (3–5 Sätze):
+   Was macht dieses Unternehmen konkret? Was sind die Stärken, die im
+   gewählten Video-Typ (Imagefilm/Recruiting/Spot/Erklär) als Differenzierung
+   funktionieren? Wenn Website-Daten vorhanden: zitiere konkret. Wenn nicht:
+   leite aus Branche und Ziel-Text plausible Hypothesen ab und kennzeichne
+   als "vermutlich…" / "wir nehmen an…".
+   NICHT: Marketing-Floskeln. SONDERN: konkrete Beobachtungen.
+   Beispiel: "Müller Pflegedienst betreut nach eigener Aussage 'jede Person
+   wie ein eigenes Familienmitglied'. Dieses Versprechen ist im Recruiting-
+   Markt selten konkret belegt — der Imagefilm sollte genau das in Szene
+   setzen: drei Pflegekräfte zeigen, woran sie diesen Anspruch im Alltag
+   festmachen."
 
-3. "empfohlene_protagonisten" (2–3 Items):
-   Konkrete Rollen aus dem Team. Format: "Rolle (z. B. Vorname),
-   warum diese Person funktioniert".
-   Beispiel: "Pflegedienstleitung (z. B. Frau Müller) – sie ist das
-   Gesicht der Werte, die in der Anzeige stehen."
+3. "video_botschaften" (4–6 Bullet-Punkte):
+   Welche konkreten Punkte sollten im gewählten Video herausgestellt werden,
+   um das Wirkungs-Ziel zu erreichen? Jeder Bullet ist ein konkreter
+   Inhalts-Punkt, kein Adjektiv.
+   Beispiele:
+   - "Echte Pflegekräfte als O-Ton-Geber:innen statt Stock-Footage."
+   - "Konkrete Schicht-Modelle und Familien-Freundlichkeit zeigen, statt
+     allgemein 'Work-Life-Balance' zu sagen."
+   - "Die Pflegedienstleitung soll persönlich auftreten — gibt dem
+     Versprechen ein Gesicht."
 
-4. "empfohlene_locations" (2–3 Items):
-   Konkrete Orte beim Kunden vor Ort. Mit Begründung warum dieser Ort die
-   Aussage trägt.
-   Beispiel: "Aufenthaltsraum – zeigt das, was im Pflege-Alltag oft fehlt:
+4. "empfohlene_protagonisten" (2–3 Items):
+   Konkrete Rollen aus dem Team. Format: "Rolle, warum diese Person funktioniert".
+   Beispiel: "Pflegedienstleitung – sie ist das Gesicht der Werte, die in
+   der Stellenanzeige stehen."
+
+5. "empfohlene_locations" (2–3 Items):
+   Konkrete Orte beim Kunden vor Ort. Mit Begründung.
+   Beispiel: "Aufenthaltsraum – zeigt, was im Pflege-Alltag oft fehlt:
    Pause auf Augenhöhe."
 
-5. "vorbereitungs_checkliste" (5–6 Items):
+6. "vorbereitungs_checkliste" (5–6 Items):
    Jedes Item ist ein konkreter Action-Step, beginnt mit Verb.
    Beispiel: "Drei Mitarbeitende auswählen, die freiwillig vor die Kamera
-   wollen – Datenschutz-Einwilligung mitschicken."
-   NICHT: "Vorbereitung sicherstellen".
+   wollen — Datenschutz-Einwilligung mitschicken."
 
-6. "naechste_schritte" (2–3 Sätze):
-   Was passiert nach dem Konfigurator? Konkret. Mit Zeitangaben.
+7. "naechste_schritte" (2–3 Sätze):
+   Was passiert nach dem Konfigurator? Mit Zeitangaben.
    Beispiel: "Wir melden uns innerhalb von 24h für ein 30-Min-Briefing-Call.
    Im Call definieren wir gemeinsam die Wirkungs-Hypothese final, dann
    bekommst du innerhalb von 5 Werktagen das Drehbuch."
 
 Zusatz-Anweisung wenn Features gewählt sind:
-- "drohne" → erwähne eine konkrete Drohnen-Einstellung in der Story
+- "drohne" → erwähne eine konkrete Drohnen-Idee in video_botschaften
 - "voiceover" → benenne die Sprecher-Charakteristik (m/w, Alter, Tonalität)
-- "animation" → sage WO im Storyboard animiert wird (Eröffnung, Outro?)
+  als Bullet in video_botschaften
+- "animation" → sage WO animiert werden sollte (z. B. "Lower-Thirds mit
+  Mitarbeiter-Namen und Berufsbezeichnung")
 - "mehrsprachig" → erwähne in naechste_schritte, dass Skript in DE finalisiert
   und dann übersetzt wird
+
+WICHTIG: Standard-Inklusivleistungen NICHT als video_botschaft auflisten —
+Untertitel, lizenzierte Musik, plattformgerechter Export und Branding sind
+bei uns immer dabei und müssen NICHT in den Botschaften auftauchen.
 TEXT;
     }
 
@@ -226,7 +246,11 @@ TEXT;
             'type'       => 'object',
             'properties' => [
                 'wirkungs_hypothese'        => [ 'type' => 'string' ],
-                'story_skizze'              => [ 'type' => 'string' ],
+                'unternehmens_analyse'      => [ 'type' => 'string' ],
+                'video_botschaften'         => [
+                    'type'  => 'array',
+                    'items' => [ 'type' => 'string' ],
+                ],
                 'empfohlene_protagonisten'  => [
                     'type'  => 'array',
                     'items' => [ 'type' => 'string' ],
@@ -243,7 +267,8 @@ TEXT;
             ],
             'required'   => [
                 'wirkungs_hypothese',
-                'story_skizze',
+                'unternehmens_analyse',
+                'video_botschaften',
                 'empfohlene_protagonisten',
                 'empfohlene_locations',
                 'vorbereitungs_checkliste',

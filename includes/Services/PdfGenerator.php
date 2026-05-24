@@ -72,7 +72,7 @@ final class PdfGenerator {
 
     private function build_filename( array $ctx ): string {
         $lead = (array) ( $ctx['lead'] ?? [] );
-        $name = sanitize_title( (string) ( $lead['vorname'] ?? 'kunde' ) );
+        $name = sanitize_title( (string) ( $lead['name'] ?: ( $lead['vorname'] ?? 'kunde' ) ) );
         $date = gmdate( 'Ymd-His' );
         $hash = substr( wp_hash( wp_json_encode( $ctx ) ), 0, 6 );
         return "konzept-{$name}-{$date}-{$hash}.pdf";

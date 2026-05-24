@@ -76,14 +76,23 @@ final class GenerateEndpoint {
         $quiz     = (array) $request->get_param( 'quiz' );
         $tracking = (array) ( $request->get_param( 'tracking' ) ?? [] );
 
+        // Vollname (Vor- und Nachname). Wir splitten Vor-/Nachname für CRM-Kompat.
+        $full_name = trim( (string) ( $lead['name'] ?? $lead['vorname'] ?? '' ) );
+        $full_name = sanitize_text_field( $full_name );
+        $name_parts = preg_split( '/\s+/', $full_name, 2 );
+        $vorname  = $name_parts[0] ?? '';
+        $nachname = $name_parts[1] ?? '';
+
         $lead = [
-            'vorname'          => sanitize_text_field( (string) ( $lead['vorname'] ?? '' ) ),
+            'name'             => $full_name,
+            'vorname'          => $vorname,
+            'nachname'         => $nachname,
             'email'            => sanitize_email( (string) ( $lead['email'] ?? '' ) ),
             'marketing_opt_in' => ! empty( $lead['marketing_opt_in'] ),
         ];
 
-        if ( $lead['vorname'] === '' || ! is_email( $lead['email'] ) ) {
-            return new WP_Error( 'invalid_lead', 'Vorname und gültige E-Mail erforderlich.', [ 'status' => 400 ] );
+        if ( $full_name === '' || $nachname === '' || ! is_email( $lead['email'] ) ) {
+            return new WP_Error( 'invalid_lead', 'Vor- und Nachname sowie gültige E-Mail erforderlich.', [ 'status' => 400 ] );
         }
 
         // Neue feature-orientierte Felder
@@ -93,6 +102,13 @@ final class GenerateEndpoint {
             array_map( 'strval', $features_raw )
         ) ) );
 
+        // Website normalisieren: User darf "deine-firma.de" eingeben ohne https://
+        $raw_website = trim( (string) ( $quiz['website'] ?? '' ) );
+        if ( $raw_website !== '' && ! preg_match( '#^https?://#i', $raw_website ) ) {
+            $raw_website = 'https://' . ltrim( $raw_website, '/' );
+        }
+        $website = $raw_website !== '' ? esc_url_raw( $raw_website ) : '';
+
         $quiz = [
             'video_typ'    => sanitize_text_field( (string) ( $quiz['video_typ']    ?? '' ) ),
             'output_paket' => sanitize_text_field( (string) ( $quiz['output_paket'] ?? 'einzel' ) ),
@@ -100,7 +116,7 @@ final class GenerateEndpoint {
             'features'     => $features,
             'zeitrahmen'   => sanitize_text_field( (string) ( $quiz['zeitrahmen']   ?? '' ) ),
             'branche'      => sanitize_text_field( (string) ( $quiz['branche']      ?? '' ) ),
-            'website'      => esc_url_raw(           (string) ( $quiz['website']      ?? '' ) ),
+            'website'      => $website,
             'ziel'         => sanitize_textarea_field( (string) ( $quiz['ziel']      ?? '' ) ),
         ];
 

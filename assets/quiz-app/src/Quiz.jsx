@@ -1,8 +1,11 @@
 import React from 'react';
 
 /* ============================================================
-   Quiz aus Kundensicht — Steps mit Image-Icons + Live-Preis-Anbindung.
-   Technische Aufwandsfragen ("wie viele Drehtage?") fliegen raus.
+   Quiz aus Kundensicht.
+   - Image-Buttons mit Emoji-Icons
+   - Features reduziert auf 4 (Untertitel + Musik = Standard, immer inkl.)
+   - Website-Input akzeptiert auch "deine-firma.de" ohne https
+   - Volles Namensfeld
    ============================================================ */
 
 const VIDEO_TYPEN = [
@@ -42,12 +45,10 @@ const VIDEO_LAENGEN = [
 ];
 
 const FEATURES = [
-  { id: 'voiceover',    label: 'Voiceover / Sprecher:in',           icon: '🎙️' },
-  { id: 'untertitel',   label: 'Untertitel (für Stumm-Wiedergabe)', icon: '💬' },
-  { id: 'animation',    label: 'Animierte Texte / Lower-Thirds',    icon: '✨' },
-  { id: 'drohne',       label: 'Drohnen-Aufnahmen',                 icon: '🚁' },
-  { id: 'musik',        label: 'Lizenzierte Musik',                 icon: '🎵' },
-  { id: 'mehrsprachig', label: 'Mehrsprachige Versionen',           icon: '🌐' },
+  { id: 'voiceover',    label: 'Voiceover / Sprecher:in',        icon: '🎙️' },
+  { id: 'animation',    label: 'Animierte Texte / Lower-Thirds', icon: '✨' },
+  { id: 'drohne',       label: 'Drohnen-Aufnahmen',              icon: '🚁' },
+  { id: 'mehrsprachig', label: 'Mehrsprachige Versionen',        icon: '🌐' },
 ];
 
 const ZEITRAHMEN = [
@@ -146,7 +147,7 @@ export default function Quiz(props) {
     return (
       <Step
         title="Wie lang soll dein Hauptvideo sein?"
-        subtitle="Längere Videos brauchen mehr Story-Bögen und mehr Schnitt – kürzere mehr Verdichtung. Der Preis passt sich entsprechend an."
+        subtitle="Längere Videos brauchen mehr Story-Bögen und mehr Schnitt. Der Preis passt sich entsprechend an."
         canNext={!!answers.video_laenge}
         onNext={onNext}
         onBack={onBack}
@@ -173,7 +174,7 @@ export default function Quiz(props) {
     return (
       <Step
         title="Welche Features soll dein Video haben?"
-        subtitle="Mehrfach-Auswahl. Diesen Schritt kannst du auch überspringen — wir empfehlen dir das passende Setup."
+        subtitle="Mehrfach-Auswahl möglich. Untertitel und lizenzierte Musik sind bei uns immer Standard – das musst du nicht extra wählen."
         canNext={true}
         nextLabel="Weiter"
         onNext={onNext}
@@ -250,10 +251,14 @@ export default function Quiz(props) {
         </div>
 
         <label className="wgk__field">
-          <span>Deine Website (für ein passgenaueres Konzept – optional)</span>
+          <span>Deine Website (für eine passgenauere Analyse – optional)</span>
           <input
-            type="url"
-            placeholder="https://deine-firma.de"
+            type="text"
+            inputMode="url"
+            autoCapitalize="off"
+            autoCorrect="off"
+            spellCheck={false}
+            placeholder="z. B. deine-firma.de"
             value={answers.website}
             onChange={(e) => set('website', e.target.value)}
           />
@@ -273,23 +278,24 @@ export default function Quiz(props) {
 
   /* ---------- Step 7: Lead ---------- */
   if (key === 'lead') {
-    const valid = lead.vorname.trim().length > 1 && /\S+@\S+\.\S+/.test(lead.email);
+    const valid = lead.name.trim().split(/\s+/).length >= 2 && /\S+@\S+\.\S+/.test(lead.email);
     return (
       <Step
         title="Wohin schicken wir dein individuelles PDF?"
-        subtitle="Wir erstellen daraus ein konkretes Konzept inkl. Preis-Range und mailen es dir in wenigen Sekunden zu."
+        subtitle="Wir erstellen daraus eine konkrete Analyse + Preis-Range und mailen es dir in wenigen Sekunden zu."
         canNext={valid && !submitting}
         nextLabel={submitting ? 'Wird erstellt …' : 'Konzept generieren'}
         onNext={onSubmit}
         onBack={onBack}
       >
         <label className="wgk__field">
-          <span>Vorname</span>
+          <span>Vor- und Nachname</span>
           <input
             type="text"
-            value={lead.vorname}
-            onChange={(e) => setLead({ ...lead, vorname: e.target.value })}
-            placeholder="Anna"
+            value={lead.name}
+            onChange={(e) => setLead({ ...lead, name: e.target.value })}
+            placeholder="Anna Müller"
+            autoComplete="name"
             required
           />
         </label>
@@ -300,6 +306,7 @@ export default function Quiz(props) {
             value={lead.email}
             onChange={(e) => setLead({ ...lead, email: e.target.value })}
             placeholder="anna@firma.de"
+            autoComplete="email"
             required
           />
         </label>
