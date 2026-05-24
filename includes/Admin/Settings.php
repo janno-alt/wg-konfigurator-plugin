@@ -37,7 +37,7 @@ final class Settings {
             'smtp_pass'        => '',
 
             // CRM-Webhook
-            'webhook_url'      => 'https://webhook.site/REPLACE_ME',
+            'webhook_url'      => 'https://crm.wg-digital.xyz/api/webhooks/wg-konfigurator',
             'webhook_secret'   => '',
             'webhook_timeout'  => 8,
 
