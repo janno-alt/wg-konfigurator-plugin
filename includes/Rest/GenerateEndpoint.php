@@ -96,6 +96,7 @@ final class GenerateEndpoint {
         $quiz = [
             'video_typ'    => sanitize_text_field( (string) ( $quiz['video_typ']    ?? '' ) ),
             'output_paket' => sanitize_text_field( (string) ( $quiz['output_paket'] ?? 'einzel' ) ),
+            'video_laenge' => sanitize_text_field( (string) ( $quiz['video_laenge'] ?? 'medium' ) ),
             'features'     => $features,
             'zeitrahmen'   => sanitize_text_field( (string) ( $quiz['zeitrahmen']   ?? '' ) ),
             'branche'      => sanitize_text_field( (string) ( $quiz['branche']      ?? '' ) ),
@@ -152,9 +153,11 @@ final class GenerateEndpoint {
             // mitspeichert.
             $features_label = PriceCalculator::feature_labels( $quiz['features'] );
             $paket_label    = PriceCalculator::paket_label( $quiz['output_paket'] );
+            $length_label   = PriceCalculator::length_label( $quiz['video_laenge'] );
 
             $ziel_kombiniert = trim( implode( ' | ', array_filter( [
                 $paket_label,
+                'Länge: ' . $length_label,
                 $features_label ? 'Features: ' . implode( ', ', $features_label ) : '',
                 $quiz['ziel'] ?: '',
             ] ) ) );
@@ -168,13 +171,14 @@ final class GenerateEndpoint {
                 'ziel'         => $ziel_kombiniert,
                 // Zusatz-Felder (gehen ins rawPayload-JSONB)
                 'output_paket' => $quiz['output_paket'],
+                'video_laenge' => $quiz['video_laenge'],
                 'features'     => $quiz['features'],
             ];
 
-            // Webhook async
-            $idempotency = wp_generate_uuid4();
-            $webhook     = new WebhookSender();
-            $webhook->dispatch( [
+            // Webhook synchron senden (auf Mittwald + DISABLE_WP_CRON ist async unzuverlässig).
+            $idempotency  = wp_generate_uuid4();
+            $webhook      = new WebhookSender();
+            $webhook_result = $webhook->dispatch( [
                 'event'           => 'konfigurator.completed',
                 'idempotency_key' => $idempotency,
                 'lead'            => $lead,
@@ -185,6 +189,15 @@ final class GenerateEndpoint {
                 'pdf_url'         => $pdf['url'],
                 'generated_at'    => gmdate( 'c' ),
             ] );
+
+            if ( ! $webhook_result['ok'] ) {
+                error_log( sprintf(
+                    '[wg-konfigurator] Webhook nicht erfolgreich: status=%d, attempts=%d, body=%s',
+                    $webhook_result['status'],
+                    $webhook_result['attempts'],
+                    substr( $webhook_result['body'], 0, 300 )
+                ) );
+            }
 
         } catch ( Throwable $e ) {
             error_log( '[wg-konfigurator] Pipeline-Fehler: ' . $e->getMessage() );

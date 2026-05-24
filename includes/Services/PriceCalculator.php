@@ -8,8 +8,11 @@ use WG\Konfigurator\Admin\Settings;
 /**
  * Deterministische Preis-Range aus den Kunden-Antworten.
  *
- * Kunden-Inputs sind feature-orientiert (output_paket, features), nicht
- * aufwandsorientiert (drehtage). Hier mappen wir das auf konkrete Preis-Ranges.
+ * Inputs sind feature-orientiert (output_paket, features, video_laenge),
+ * nicht aufwandsorientiert (drehtage). Wir mappen das auf konkrete Preis-Ranges.
+ *
+ * Wichtig: dieselbe Logik existiert client-seitig in App.jsx als Live-Preis
+ * (`computePrice`). Wenn du hier etwas änderst, auch dort anpassen.
  */
 final class PriceCalculator {
 
@@ -17,6 +20,13 @@ final class PriceCalculator {
         'einzel'   => [ 'days' => 1, 'mult_min' => 1.0,  'mult_max' => 1.0  ],
         'paket'    => [ 'days' => 2, 'mult_min' => 1.35, 'mult_max' => 1.45 ],
         'kampagne' => [ 'days' => 3, 'mult_min' => 1.7,  'mult_max' => 2.0  ],
+    ];
+
+    private const LAENGE_MAP = [
+        'short'      => 0.85,  // Reel/Short – weniger Schnitt-Aufwand
+        'medium'     => 1.0,   // Spot – Standard
+        'long'       => 1.20,  // Imagefilm – mehr Story-Bögen
+        'extra_long' => 1.40,  // Erklärvideo – Drehbuch + Animation
     ];
 
     private const FEATURE_PRICE = [
@@ -40,21 +50,23 @@ final class PriceCalculator {
         $settings = Settings::get();
         $base     = $settings['price_base'] ?? [];
 
-        $typ        = $this->normalize_typ( (string) ( $quiz['video_typ'] ?? '' ) );
-        $paket      = $this->normalize_paket( (string) ( $quiz['output_paket'] ?? 'einzel' ) );
-        $features   = array_values( array_filter( array_map(
+        $typ      = $this->normalize_typ(    (string) ( $quiz['video_typ']    ?? '' ) );
+        $paket    = $this->normalize_paket(  (string) ( $quiz['output_paket'] ?? 'einzel' ) );
+        $laenge   = $this->normalize_laenge( (string) ( $quiz['video_laenge'] ?? 'medium' ) );
+        $features = array_values( array_filter( array_map(
             'strval',
             (array) ( $quiz['features'] ?? [] )
         ) ) );
 
-        $b       = $base[ $typ ] ?? [ 'min' => 1990, 'max' => 3990 ];
-        $paket_def = self::PAKET_MAP[ $paket ];
+        $b           = $base[ $typ ] ?? [ 'min' => 1990, 'max' => 3990 ];
+        $paket_def   = self::PAKET_MAP[ $paket ];
+        $length_mult = self::LAENGE_MAP[ $laenge ];
 
-        // Basis-Range
-        $preis_min = (int) round( $b['min'] * $paket_def['mult_min'] );
-        $preis_max = (int) round( $b['max'] * $paket_def['mult_max'] );
+        // Basis × Paket-Multiplikator × Länge-Multiplikator
+        $preis_min = (int) round( $b['min'] * $paket_def['mult_min'] * $length_mult );
+        $preis_max = (int) round( $b['max'] * $paket_def['mult_max'] * $length_mult );
 
-        // Feature-Aufschläge
+        // Feature-Aufschläge (fix)
         $features_aufschlag = 0;
         foreach ( $features as $f ) {
             $features_aufschlag += (int) ( self::FEATURE_PRICE[ $f ] ?? 0 );
@@ -88,15 +100,17 @@ final class PriceCalculator {
             'score'             => $score,
             'drehtage'          => $paket_def['days'],
             'breakdown'         => [
-                'video_typ'       => $typ,
-                'output_paket'    => $paket,
-                'base_min'        => (int) $b['min'],
-                'base_max'        => (int) $b['max'],
-                'paket_mult_min'  => $paket_def['mult_min'],
-                'paket_mult_max'  => $paket_def['mult_max'],
-                'features'        => $features,
-                'features_aufschlag' => $features_aufschlag,
-                'drehtage_intern' => $paket_def['days'],
+                'video_typ'         => $typ,
+                'output_paket'      => $paket,
+                'video_laenge'      => $laenge,
+                'base_min'          => (int) $b['min'],
+                'base_max'          => (int) $b['max'],
+                'paket_mult_min'    => $paket_def['mult_min'],
+                'paket_mult_max'    => $paket_def['mult_max'],
+                'length_mult'       => $length_mult,
+                'features'          => $features,
+                'features_aufschlag'=> $features_aufschlag,
+                'drehtage_intern'   => $paket_def['days'],
             ],
         ];
     }
@@ -123,9 +137,12 @@ final class PriceCalculator {
         return in_array( $value, [ 'einzel', 'paket', 'kampagne' ], true ) ? $value : 'einzel';
     }
 
+    private function normalize_laenge( string $value ): string {
+        $value = strtolower( trim( $value ) );
+        return in_array( $value, [ 'short', 'medium', 'long', 'extra_long' ], true ) ? $value : 'medium';
+    }
+
     /**
-     * Übersetzt Feature-IDs in lesbare Labels (für Mail/PDF/Webhook).
-     *
      * @param string[] $ids
      * @return string[]
      */
@@ -147,12 +164,20 @@ final class PriceCalculator {
         return $out;
     }
 
-    /** Lesbares Label für Output-Paket */
     public static function paket_label( string $id ): string {
         return [
             'einzel'   => 'Ein fertiges Hauptvideo',
             'paket'    => 'Hauptvideo + Social-Cuts',
             'kampagne' => 'Vollkampagne (Hauptvideo + Social-Cuts + Bonus)',
+        ][ $id ] ?? $id;
+    }
+
+    public static function length_label( string $id ): string {
+        return [
+            'short'      => '15–30 Sek. (Reel / Short)',
+            'medium'     => '60–90 Sek. (Spot)',
+            'long'       => '2–3 Min. (Imagefilm)',
+            'extra_long' => '4–5 Min. (Erklärfilm)',
         ][ $id ] ?? $id;
     }
 }

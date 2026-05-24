@@ -1,20 +1,15 @@
 import React from 'react';
 
 /* ============================================================
-   Quiz aus Kundensicht: nur Dinge, die der Kunde wirklich kennt:
-   - Was für ein Video (Ergebnis)
-   - Welche Outputs er bekommt (Liefer-Paket)
-   - Welche Features im Video drin sein sollen
-   - Wann er es braucht
-   - Wer er ist
-   Technische Aufwand-Fragen ("wie viele Drehtage?") fliegen raus.
+   Quiz aus Kundensicht — Steps mit Image-Icons + Live-Preis-Anbindung.
+   Technische Aufwandsfragen ("wie viele Drehtage?") fliegen raus.
    ============================================================ */
 
 const VIDEO_TYPEN = [
-  { id: 'imagefilm',    label: 'Imagefilm',         hint: 'Marke greifbar machen, Vertrauen aufbauen' },
-  { id: 'werbespot',    label: 'Werbespot / Reel',  hint: 'Verkauf, Reichweite, Social-Hook' },
-  { id: 'recruiting',   label: 'Recruiting-Video',  hint: 'Bewerber:innen gewinnen' },
-  { id: 'erklaervideo', label: 'Erklärvideo',       hint: 'Komplexes verständlich machen' },
+  { id: 'imagefilm',    label: 'Imagefilm',         hint: 'Marke greifbar machen, Vertrauen aufbauen', icon: '🎬' },
+  { id: 'werbespot',    label: 'Werbespot / Reel',  hint: 'Verkauf, Reichweite, Social-Hook',         icon: '📱' },
+  { id: 'recruiting',   label: 'Recruiting-Video',  hint: 'Bewerber:innen gewinnen',                  icon: '🤝' },
+  { id: 'erklaervideo', label: 'Erklärvideo',       hint: 'Komplexes verständlich machen',            icon: '💡' },
 ];
 
 const OUTPUT_PAKETE = [
@@ -22,27 +17,37 @@ const OUTPUT_PAKETE = [
     id: 'einzel',
     label: 'Ein fertiges Hauptvideo',
     hint: 'Z. B. ein Image-/Recruiting-Spot für deine Website oder einen Kanal.',
+    icon: '🎯',
   },
   {
     id: 'paket',
     label: 'Hauptvideo + Social-Cuts',
     hint: '1 Hauptvideo + 2–3 kurze Versionen (Reels/Shorts/TikTok) für Social.',
+    icon: '📦',
     badge: 'Empfohlen',
   },
   {
     id: 'kampagne',
     label: 'Vollkampagne',
     hint: 'Hauptvideo + Social-Cuts + Behind-the-Scenes + Story-Snippets.',
+    icon: '🚀',
   },
 ];
 
+const VIDEO_LAENGEN = [
+  { id: 'short',      label: '15–30 Sek.',  hint: 'Reel, Short, TikTok – ein Punch.',                icon: '⚡' },
+  { id: 'medium',     label: '60–90 Sek.',  hint: 'Klassischer Spot, Pre-Roll, Hero-Video.',         icon: '🎞️' },
+  { id: 'long',       label: '2–3 Min.',    hint: 'Imagefilm mit Story und mehreren Szenen.',        icon: '📺' },
+  { id: 'extra_long', label: '4–5 Min.',    hint: 'Erklärfilm, Mitarbeiter-Portrait, Bewegt-FAQ.',   icon: '🎥' },
+];
+
 const FEATURES = [
-  { id: 'voiceover',  label: 'Voiceover / Sprecher:in' },
-  { id: 'untertitel', label: 'Untertitel (für Stumm-Wiedergabe)' },
-  { id: 'animation',  label: 'Animierte Texte / Lower-Thirds' },
-  { id: 'drohne',     label: 'Drohnen-Aufnahmen' },
-  { id: 'musik',      label: 'Lizenzierte Musik' },
-  { id: 'mehrsprachig', label: 'Mehrsprachige Versionen' },
+  { id: 'voiceover',    label: 'Voiceover / Sprecher:in',           icon: '🎙️' },
+  { id: 'untertitel',   label: 'Untertitel (für Stumm-Wiedergabe)', icon: '💬' },
+  { id: 'animation',    label: 'Animierte Texte / Lower-Thirds',    icon: '✨' },
+  { id: 'drohne',       label: 'Drohnen-Aufnahmen',                 icon: '🚁' },
+  { id: 'musik',        label: 'Lizenzierte Musik',                 icon: '🎵' },
+  { id: 'mehrsprachig', label: 'Mehrsprachige Versionen',           icon: '🌐' },
 ];
 
 const ZEITRAHMEN = [
@@ -94,15 +99,14 @@ export default function Quiz(props) {
       >
         <div className="wgk__grid wgk__grid--2">
           {VIDEO_TYPEN.map((t) => (
-            <button
-              type="button"
+            <IconCard
               key={t.id}
-              className={`wgk__card ${answers.video_typ === t.id ? 'is-active' : ''}`}
+              icon={t.icon}
+              label={t.label}
+              hint={t.hint}
+              active={answers.video_typ === t.id}
               onClick={() => set('video_typ', t.id)}
-            >
-              <strong>{t.label}</strong>
-              <span>{t.hint}</span>
-            </button>
+            />
           ))}
         </div>
       </Step>
@@ -114,38 +118,62 @@ export default function Quiz(props) {
     return (
       <Step
         title="Was möchtest du am Ende in der Hand haben?"
-        subtitle="Du musst nichts über Drehtage oder Schnitt-Stunden wissen — sag uns einfach, welches Liefer-Paket du brauchst."
+        subtitle="Du musst nichts über Drehtage oder Schnitt-Stunden wissen. Wähle einfach das Liefer-Paket, das zu deinem Vorhaben passt."
         canNext={!!answers.output_paket}
         onNext={onNext}
         onBack={onBack}
       >
         <div className="wgk__stack">
           {OUTPUT_PAKETE.map((p) => (
-            <button
-              type="button"
+            <IconCard
               key={p.id}
-              className={`wgk__card ${answers.output_paket === p.id ? 'is-active' : ''}`}
+              icon={p.icon}
+              label={p.label}
+              hint={p.hint}
+              badge={p.badge}
+              wide
+              active={answers.output_paket === p.id}
               onClick={() => set('output_paket', p.id)}
-            >
-              <strong style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>{p.label}</span>
-                {p.badge && <em className="wgk__badge">{p.badge}</em>}
-              </strong>
-              <span>{p.hint}</span>
-            </button>
+            />
           ))}
         </div>
       </Step>
     );
   }
 
-  /* ---------- Step 3: Features ---------- */
+  /* ---------- Step 3: Video-Länge ---------- */
+  if (key === 'video_laenge') {
+    return (
+      <Step
+        title="Wie lang soll dein Hauptvideo sein?"
+        subtitle="Längere Videos brauchen mehr Story-Bögen und mehr Schnitt – kürzere mehr Verdichtung. Der Preis passt sich entsprechend an."
+        canNext={!!answers.video_laenge}
+        onNext={onNext}
+        onBack={onBack}
+      >
+        <div className="wgk__grid wgk__grid--2">
+          {VIDEO_LAENGEN.map((l) => (
+            <IconCard
+              key={l.id}
+              icon={l.icon}
+              label={l.label}
+              hint={l.hint}
+              active={answers.video_laenge === l.id}
+              onClick={() => set('video_laenge', l.id)}
+            />
+          ))}
+        </div>
+      </Step>
+    );
+  }
+
+  /* ---------- Step 4: Features ---------- */
   if (key === 'features') {
     const sel = Array.isArray(answers.features) ? answers.features : [];
     return (
       <Step
         title="Welche Features soll dein Video haben?"
-        subtitle="Mehrfach-Auswahl möglich. Du kannst diesen Schritt auch überspringen — wir empfehlen dir das passende Setup."
+        subtitle="Mehrfach-Auswahl. Diesen Schritt kannst du auch überspringen — wir empfehlen dir das passende Setup."
         canNext={true}
         nextLabel="Weiter"
         onNext={onNext}
@@ -161,8 +189,9 @@ export default function Quiz(props) {
                 className={`wgk__checkitem ${checked ? 'is-checked' : ''}`}
                 onClick={() => toggleFeature(f.id)}
               >
+                <span className="wgk__checkitem-icon">{f.icon}</span>
+                <span className="wgk__checkitem-label">{f.label}</span>
                 <span className="wgk__checkitem-box">{checked ? '✓' : ''}</span>
-                <span>{f.label}</span>
               </button>
             );
           })}
@@ -171,7 +200,7 @@ export default function Quiz(props) {
     );
   }
 
-  /* ---------- Step 4: Zeitrahmen ---------- */
+  /* ---------- Step 5: Zeitrahmen ---------- */
   if (key === 'zeitrahmen') {
     return (
       <Step
@@ -197,7 +226,7 @@ export default function Quiz(props) {
     );
   }
 
-  /* ---------- Step 5: Branche + Website + Ziel ---------- */
+  /* ---------- Step 6: Branche + Website + Ziel ---------- */
   if (key === 'kontext') {
     return (
       <Step
@@ -242,7 +271,7 @@ export default function Quiz(props) {
     );
   }
 
-  /* ---------- Step 6: Lead ---------- */
+  /* ---------- Step 7: Lead ---------- */
   if (key === 'lead') {
     const valid = lead.vorname.trim().length > 1 && /\S+@\S+\.\S+/.test(lead.email);
     return (
@@ -282,9 +311,7 @@ export default function Quiz(props) {
           />
           <span>Ja, gelegentlich Updates zu Videomarketing-Tipps von WG-Digital erhalten (jederzeit abbestellbar).</span>
         </label>
-        <p className="wgk__note">
-          Kein Spam, keine automatischen Newsletter ohne dein OK.
-        </p>
+        <p className="wgk__note">Kein Spam, keine automatischen Newsletter ohne dein OK.</p>
         {error && <p className="wgk__error">{error}</p>}
       </Step>
     );
@@ -292,6 +319,8 @@ export default function Quiz(props) {
 
   return null;
 }
+
+/* ---------- Components ---------- */
 
 function Step({ title, subtitle, children, canNext, onNext, onBack, nextLabel = 'Weiter' }) {
   return (
@@ -315,5 +344,24 @@ function Step({ title, subtitle, children, canNext, onNext, onBack, nextLabel = 
         </button>
       </div>
     </div>
+  );
+}
+
+function IconCard({ icon, label, hint, badge, active, wide, onClick }) {
+  return (
+    <button
+      type="button"
+      className={`wgk__iconcard ${wide ? 'wgk__iconcard--wide' : ''} ${active ? 'is-active' : ''}`}
+      onClick={onClick}
+    >
+      <span className="wgk__iconcard-icon" aria-hidden="true">{icon}</span>
+      <span className="wgk__iconcard-body">
+        <span className="wgk__iconcard-label">
+          {label}
+          {badge && <em className="wgk__badge">{badge}</em>}
+        </span>
+        {hint && <span className="wgk__iconcard-hint">{hint}</span>}
+      </span>
+    </button>
   );
 }

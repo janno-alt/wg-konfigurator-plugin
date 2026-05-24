@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import Quiz from './Quiz.jsx';
 import Result from './Result.jsx';
+import { computePrice, formatPriceRange } from './pricing.js';
 
-const STEPS = ['video_typ', 'output_paket', 'features', 'zeitrahmen', 'kontext', 'lead'];
+const STEPS = ['video_typ', 'output_paket', 'video_laenge', 'features', 'zeitrahmen', 'kontext', 'lead'];
 
 export default function App({ theme = 'dark' }) {
   const config = window.WG_KONFIGURATOR || {};
@@ -10,7 +11,8 @@ export default function App({ theme = 'dark' }) {
   const [answers, setAnswers] = useState({
     video_typ: '',
     output_paket: '',
-    features: [],          // string[] – Feature-Toggles
+    video_laenge: 'medium',
+    features: [],
     zeitrahmen: '',
     branche: '',
     website: '',
@@ -23,6 +25,12 @@ export default function App({ theme = 'dark' }) {
 
   const total = STEPS.length;
   const progress = useMemo(() => Math.round((step / total) * 100), [step, total]);
+
+  // Live-Preis-Berechnung: greift, sobald video_typ + output_paket gewählt sind
+  const livePrice = useMemo(() => {
+    if (!answers.video_typ || !answers.output_paket) return null;
+    return computePrice(answers);
+  }, [answers]);
 
   function next() { setStep((s) => Math.min(s + 1, total)); }
   function back() { setStep((s) => Math.max(0, s - 1)); }
@@ -67,6 +75,7 @@ export default function App({ theme = 'dark' }) {
           event: 'konfigurator_completed',
           video_typ: answers.video_typ,
           output_paket: answers.output_paket,
+          video_laenge: answers.video_laenge,
           zeitrahmen: answers.zeitrahmen,
           preis_min: data.preis_min,
           preis_max: data.preis_max,
@@ -88,6 +97,13 @@ export default function App({ theme = 'dark' }) {
       <div className="wgk__progress">
         <div className="wgk__progress-bar" style={{ width: `${progress}%` }} />
       </div>
+
+      {livePrice && (
+        <div className="wgk__livepricepill" aria-live="polite">
+          <span className="wgk__livepricepill-label">Aktueller Investitionsrahmen</span>
+          <strong className="wgk__livepricepill-value">{formatPriceRange(livePrice)}</strong>
+        </div>
+      )}
 
       <Quiz
         step={step}
