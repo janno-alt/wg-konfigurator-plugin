@@ -3,7 +3,7 @@
  * Plugin Name:       WG Konfigurator
  * Plugin URI:        https://github.com/janno-alt/wg-konfigurator-plugin
  * Description:       Video-Konfigurator: Quiz-Wizard, KI-generiertes Konzept (Gemini), PDF-Auslieferung, CRM-Webhook.
- * Version:           0.1.0
+ * Version:           0.1.1
  * Requires at least: 6.4
  * Requires PHP:      8.1
  * Author:            WG-Digital
@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // ---------- Constants ----------
-define( 'WG_KONFIGURATOR_VERSION', '0.1.0' );
+define( 'WG_KONFIGURATOR_VERSION', '0.1.1' );
 define( 'WG_KONFIGURATOR_FILE', __FILE__ );
 define( 'WG_KONFIGURATOR_DIR', plugin_dir_path( __FILE__ ) );
 define( 'WG_KONFIGURATOR_URL', plugin_dir_url( __FILE__ ) );
@@ -30,13 +30,29 @@ define( 'WG_KONFIGURATOR_BASENAME', plugin_basename( __FILE__ ) );
 
 // ---------- Autoloader (Composer) ----------
 $composer_autoload = WG_KONFIGURATOR_DIR . 'vendor/autoload.php';
-if ( file_exists( $composer_autoload ) ) {
+if ( file_exists( $composer_autoload ) && is_readable( $composer_autoload ) ) {
     require_once $composer_autoload;
 } else {
-    add_action( 'admin_notices', static function () {
+    // Detaillierte Diagnose, damit wir den Pfad sehen wenn das ZIP unvollständig ausgepackt wurde
+    add_action( 'admin_notices', static function () use ( $composer_autoload ) {
+        $exists   = file_exists( $composer_autoload );
+        $readable = $exists && is_readable( $composer_autoload );
+        $vendor_dir = WG_KONFIGURATOR_DIR . 'vendor';
+        $vendor_exists = is_dir( $vendor_dir );
+        $vendor_files  = $vendor_exists ? count( (array) @scandir( $vendor_dir ) ) - 2 : 0;
+
         echo '<div class="notice notice-error"><p><strong>WG Konfigurator:</strong> '
-            . esc_html__( 'Composer-Dependencies fehlen. Bitte `composer install` im Plugin-Verzeichnis ausführen.', 'wg-konfigurator' )
-            . '</p></div>';
+            . esc_html__( 'Composer-Dependencies fehlen oder sind nicht lesbar.', 'wg-konfigurator' )
+            . '</p><pre style="background:#fff;padding:8px;border:1px solid #ccc;font-size:12px;">'
+            . 'Plugin-Pfad: ' . esc_html( WG_KONFIGURATOR_DIR ) . "\n"
+            . 'Erwarteter autoload.php: ' . esc_html( $composer_autoload ) . "\n"
+            . 'file_exists():  ' . ( $exists ? 'JA' : 'NEIN' ) . "\n"
+            . 'is_readable():  ' . ( $readable ? 'JA' : 'NEIN' ) . "\n"
+            . 'vendor/ existiert: ' . ( $vendor_exists ? 'JA' : 'NEIN' ) . "\n"
+            . 'vendor/ Einträge: ' . esc_html( (string) $vendor_files ) . "\n"
+            . 'PHP open_basedir: ' . esc_html( ini_get( 'open_basedir' ) ?: '(nicht gesetzt)' ) . "\n"
+            . 'PHP-Version: ' . PHP_VERSION
+            . '</pre></div>';
     } );
     return;
 }
