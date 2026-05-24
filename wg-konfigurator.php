@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name:       WG Konfigurator
- * Plugin URI:        https://github.com/wg-digital/wg-konfigurator-plugin
+ * Plugin URI:        https://github.com/janno-alt/wg-konfigurator-plugin
  * Description:       Video-Konfigurator: Quiz-Wizard, KI-generiertes Konzept (Gemini), PDF-Auslieferung, CRM-Webhook.
  * Version:           0.1.0
  * Requires at least: 6.4

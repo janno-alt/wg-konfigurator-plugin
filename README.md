@@ -21,7 +21,7 @@ Komplett im eigenen WordPress, ohne n8n, ohne SaaS.
 ## Schnellstart
 
 ```bash
-git clone git@github.com:wg-digital/wg-konfigurator-plugin.git wg-konfigurator
+git clone git@github.com:janno-alt/wg-konfigurator-plugin.git wg-konfigurator
 cd wg-konfigurator
 composer install --no-dev
 cd assets/quiz-app && npm install && npm run build

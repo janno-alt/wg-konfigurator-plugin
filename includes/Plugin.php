@@ -49,7 +49,7 @@ final class Plugin {
 
         $repo_url = apply_filters(
             'wg_konfigurator_update_repo',
-            'https://github.com/wg-digital/wg-konfigurator-plugin'
+            'https://github.com/janno-alt/wg-konfigurator-plugin'
         );
 
         $checker = PucFactory::buildUpdateChecker(
