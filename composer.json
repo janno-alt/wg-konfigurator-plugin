@@ -1,0 +1,22 @@
+{
+  "name": "wg-digital/wg-konfigurator",
+  "description": "WG-Digital Video-Konfigurator — Quiz + KI-Konzept + PDF + CRM-Webhook für WordPress",
+  "type": "wordpress-plugin",
+  "license": "proprietary",
+  "require": {
+    "php": ">=8.1",
+    "dompdf/dompdf": "^3.0",
+    "fivefilters/readability.php": "^3.2",
+    "yahnis-elsts/plugin-update-checker": "^5.5"
+  },
+  "autoload": {
+    "psr-4": {
+      "WG\\Konfigurator\\": "includes/"
+    }
+  },
+  "config": {
+    "platform-check": false,
+    "optimize-autoloader": true,
+    "sort-packages": true
+  }
+}

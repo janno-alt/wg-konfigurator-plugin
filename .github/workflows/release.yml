@@ -1,0 +1,63 @@
+name: Release Plugin ZIP
+
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: composer
+
+      - name: Composer install (no-dev)
+        run: composer install --no-dev --optimize-autoloader --no-interaction
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Quiz – npm install
+        working-directory: assets/quiz-app
+        run: npm install --no-audit --no-fund
+
+      - name: Quiz – npm build
+        working-directory: assets/quiz-app
+        run: npm run build
+
+      - name: Build plugin ZIP
+        run: |
+          STAGE="$RUNNER_TEMP/wg-konfigurator"
+          mkdir -p "$STAGE"
+          rsync -av \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='node_modules' \
+            --exclude='assets/quiz-app/node_modules' \
+            --exclude='assets/quiz-app/src' \
+            --exclude='assets/quiz-app/vite.config.js' \
+            --exclude='assets/quiz-app/package*.json' \
+            --exclude='assets/quiz-app/index.html' \
+            --exclude='composer.json' \
+            --exclude='composer.lock' \
+            --exclude='INSTALL.md' \
+            --exclude='docs' \
+            ./ "$STAGE/"
+          cd "$RUNNER_TEMP"
+          zip -r "$GITHUB_WORKSPACE/wg-konfigurator-${GITHUB_REF_NAME}.zip" wg-konfigurator
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: wg-konfigurator-*.zip
+          generate_release_notes: true

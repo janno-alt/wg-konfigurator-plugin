@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WG Konfigurator – Dev</title>
+  </head>
+  <body style="background:#141414;color:#fff;font-family:sans-serif;padding:20px;">
+    <!-- Dev-Mock für lokales Vite-Preview -->
+    <script>
+      window.WG_KONFIGURATOR = {
+        restUrl: 'http://localhost:8080/wp-json/wg-konfigurator/v1/generate',
+        nonce: 'dev',
+        recaptchaSite: '',
+        meetingUrl: 'https://cal.meetergo.com/janno-fleischer/30-min-meeting-or-janno-fleischer',
+        tracking: { msclkid: '', utm_source: 'dev', utm_medium: '', utm_campaign: '' },
+      };
+    </script>
+    <div id="wg-konfigurator-root" data-theme="dark"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

@@ -1,0 +1,37 @@
+# Composer
+/vendor/
+composer.lock
+
+# Node / Vite
+node_modules/
+assets/quiz-app/node_modules/
+assets/quiz-app/dist/
+.cache/
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Build artifacts that ARE committed for distribution
+# (we DO commit /assets/quiz-app/build/ — see below)
+!assets/quiz-app/build/
+
+# Secrets — never commit
+.env
+.env.local
+*.pem
+*.key
+wp-config-local.php
+
+# Generated PDFs (runtime)
+uploads/
+storage/
+*.pdf
+!docs/*.pdf
+
+# Logs
+*.log
