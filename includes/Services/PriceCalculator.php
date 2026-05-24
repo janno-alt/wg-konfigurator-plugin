@@ -6,30 +6,64 @@ namespace WG\Konfigurator\Services;
 use WG\Konfigurator\Admin\Settings;
 
 /**
- * Deterministische Preis-Range aus Quiz-Antworten.
- * KI tut hier NICHT mit – Preise sind transparent und nachvollziehbar.
+ * Deterministische Preis-Range aus den Kunden-Antworten.
+ *
+ * Kunden-Inputs sind feature-orientiert (output_paket, features), nicht
+ * aufwandsorientiert (drehtage). Hier mappen wir das auf konkrete Preis-Ranges.
  */
 final class PriceCalculator {
 
+    private const PAKET_MAP = [
+        'einzel'   => [ 'days' => 1, 'mult_min' => 1.0,  'mult_max' => 1.0  ],
+        'paket'    => [ 'days' => 2, 'mult_min' => 1.35, 'mult_max' => 1.45 ],
+        'kampagne' => [ 'days' => 3, 'mult_min' => 1.7,  'mult_max' => 2.0  ],
+    ];
+
+    private const FEATURE_PRICE = [
+        'voiceover'    => 290,
+        'untertitel'   => 190,
+        'animation'    => 450,
+        'drohne'       => 590,
+        'musik'        => 150,
+        'mehrsprachig' => 390,
+    ];
+
     /**
      * @param array<string,mixed> $quiz
-     * @return array{preis_min:int,preis_max:int,express_aufschlag:int,score:int,breakdown:array<string,mixed>}
+     * @return array{
+     *   preis_min:int, preis_max:int, express_aufschlag:int, score:int,
+     *   drehtage:int, features_aufschlag:int,
+     *   breakdown:array<string,mixed>
+     * }
      */
     public function calculate( array $quiz ): array {
         $settings = Settings::get();
         $base     = $settings['price_base'] ?? [];
-        $per_day  = (int) ( $settings['price_per_day'] ?? 850 );
+
+        $typ        = $this->normalize_typ( (string) ( $quiz['video_typ'] ?? '' ) );
+        $paket      = $this->normalize_paket( (string) ( $quiz['output_paket'] ?? 'einzel' ) );
+        $features   = array_values( array_filter( array_map(
+            'strval',
+            (array) ( $quiz['features'] ?? [] )
+        ) ) );
+
+        $b       = $base[ $typ ] ?? [ 'min' => 1990, 'max' => 3990 ];
+        $paket_def = self::PAKET_MAP[ $paket ];
+
+        // Basis-Range
+        $preis_min = (int) round( $b['min'] * $paket_def['mult_min'] );
+        $preis_max = (int) round( $b['max'] * $paket_def['mult_max'] );
+
+        // Feature-Aufschläge
+        $features_aufschlag = 0;
+        foreach ( $features as $f ) {
+            $features_aufschlag += (int) ( self::FEATURE_PRICE[ $f ] ?? 0 );
+        }
+        $preis_min += $features_aufschlag;
+        $preis_max += $features_aufschlag;
+
+        // Express-Aufschlag
         $express  = (float) ( $settings['express_surcharge'] ?? 0.20 );
-
-        $typ = $this->normalize_typ( (string) ( $quiz['video_typ'] ?? '' ) );
-        $b   = $base[ $typ ] ?? [ 'min' => 1990, 'max' => 3990 ];
-
-        $drehtage = max( 1, min( 5, (int) ( $quiz['drehtage'] ?? 1 ) ) );
-        $extra    = ( $drehtage - 1 ) * $per_day;
-
-        $preis_min = (int) $b['min'] + $extra;
-        $preis_max = (int) $b['max'] + $extra;
-
         $express_aufschlag = 0;
         if ( ( $quiz['zeitrahmen'] ?? '' ) === 'express' ) {
             $express_aufschlag = (int) round( $preis_max * $express );
@@ -37,11 +71,12 @@ final class PriceCalculator {
             $preis_max        += $express_aufschlag;
         }
 
-        // Lead-Score (0–100): wie passend ist die Anfrage?
-        $score = 50;
-        $score += in_array( $typ, [ 'imagefilm', 'recruiting' ], true ) ? 15 : 0;
-        $score += $drehtage >= 2 ? 10 : 0;
-        $score += ( $quiz['zeitrahmen'] ?? '' ) === 'flexibel' ? 10 : 0;
+        // Lead-Score (0–100)
+        $score = 40;
+        $score += in_array( $typ, [ 'imagefilm', 'recruiting' ], true ) ? 15 : 5;
+        $score += $paket === 'kampagne' ? 15 : ( $paket === 'paket' ? 10 : 0 );
+        $score += ( $quiz['zeitrahmen'] ?? '' ) === 'flexibel' ? 10 : 5;
+        $score += count( $features ) >= 2 ? 10 : 0;
         $score += ! empty( $quiz['website'] ) ? 10 : 0;
         $score  = min( 100, $score );
 
@@ -49,14 +84,19 @@ final class PriceCalculator {
             'preis_min'         => $preis_min,
             'preis_max'         => $preis_max,
             'express_aufschlag' => $express_aufschlag,
+            'features_aufschlag'=> $features_aufschlag,
             'score'             => $score,
+            'drehtage'          => $paket_def['days'],
             'breakdown'         => [
-                'video_typ' => $typ,
-                'base_min'  => (int) $b['min'],
-                'base_max'  => (int) $b['max'],
-                'drehtage'  => $drehtage,
-                'per_day'   => $per_day,
-                'extra'     => $extra,
+                'video_typ'       => $typ,
+                'output_paket'    => $paket,
+                'base_min'        => (int) $b['min'],
+                'base_max'        => (int) $b['max'],
+                'paket_mult_min'  => $paket_def['mult_min'],
+                'paket_mult_max'  => $paket_def['mult_max'],
+                'features'        => $features,
+                'features_aufschlag' => $features_aufschlag,
+                'drehtage_intern' => $paket_def['days'],
             ],
         ];
     }
@@ -64,17 +104,55 @@ final class PriceCalculator {
     private function normalize_typ( string $value ): string {
         $value = strtolower( trim( $value ) );
         $map   = [
-            'image'            => 'imagefilm',
-            'imagefilm'        => 'imagefilm',
-            'werbung'          => 'werbespot',
-            'werbespot'        => 'werbespot',
-            'spot'             => 'werbespot',
-            'recruiting'       => 'recruiting',
-            'mitarbeitergewinnung' => 'recruiting',
-            'erklaer'          => 'erklaervideo',
-            'erklaervideo'     => 'erklaervideo',
-            'erklärvideo'      => 'erklaervideo',
+            'image'                 => 'imagefilm',
+            'imagefilm'             => 'imagefilm',
+            'werbung'               => 'werbespot',
+            'werbespot'             => 'werbespot',
+            'spot'                  => 'werbespot',
+            'recruiting'            => 'recruiting',
+            'mitarbeitergewinnung'  => 'recruiting',
+            'erklaer'               => 'erklaervideo',
+            'erklaervideo'          => 'erklaervideo',
+            'erklärvideo'           => 'erklaervideo',
         ];
         return $map[ $value ] ?? 'werbespot';
+    }
+
+    private function normalize_paket( string $value ): string {
+        $value = strtolower( trim( $value ) );
+        return in_array( $value, [ 'einzel', 'paket', 'kampagne' ], true ) ? $value : 'einzel';
+    }
+
+    /**
+     * Übersetzt Feature-IDs in lesbare Labels (für Mail/PDF/Webhook).
+     *
+     * @param string[] $ids
+     * @return string[]
+     */
+    public static function feature_labels( array $ids ): array {
+        $map = [
+            'voiceover'    => 'Voiceover / Sprecher:in',
+            'untertitel'   => 'Untertitel',
+            'animation'    => 'Animierte Texte / Lower-Thirds',
+            'drohne'       => 'Drohnen-Aufnahmen',
+            'musik'        => 'Lizenzierte Musik',
+            'mehrsprachig' => 'Mehrsprachige Versionen',
+        ];
+        $out = [];
+        foreach ( $ids as $id ) {
+            if ( isset( $map[ $id ] ) ) {
+                $out[] = $map[ $id ];
+            }
+        }
+        return $out;
+    }
+
+    /** Lesbares Label für Output-Paket */
+    public static function paket_label( string $id ): string {
+        return [
+            'einzel'   => 'Ein fertiges Hauptvideo',
+            'paket'    => 'Hauptvideo + Social-Cuts',
+            'kampagne' => 'Vollkampagne (Hauptvideo + Social-Cuts + Bonus)',
+        ][ $id ] ?? $id;
     }
 }

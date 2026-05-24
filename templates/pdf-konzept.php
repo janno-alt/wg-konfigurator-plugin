@@ -162,9 +162,18 @@ $fmt_eur = static function ( $n ): string {
     </div>
 
     <h3>Eckdaten deiner Anfrage</h3>
+    <?php
+        $paket_label = \WG\Konfigurator\Services\PriceCalculator::paket_label(
+            (string) ( $quiz['output_paket'] ?? 'einzel' )
+        );
+        $features_label = \WG\Konfigurator\Services\PriceCalculator::feature_labels(
+            (array) ( $quiz['features'] ?? [] )
+        );
+    ?>
     <table class="kv">
         <tr><td class="k">Video-Typ</td>     <td class="v"><?php echo esc_html( ucfirst( (string) ( $pricing['breakdown']['video_typ'] ?? '–' ) ) ); ?></td></tr>
-        <tr><td class="k">Drehtage</td>      <td class="v"><?php echo esc_html( (string) ( $pricing['breakdown']['drehtage'] ?? '–' ) ); ?></td></tr>
+        <tr><td class="k">Output-Paket</td>  <td class="v"><?php echo esc_html( $paket_label ); ?></td></tr>
+        <tr><td class="k">Features</td>      <td class="v"><?php echo esc_html( $features_label ? implode( ', ', $features_label ) : 'Standard-Setup' ); ?></td></tr>
         <tr><td class="k">Zeitrahmen</td>    <td class="v"><?php echo esc_html( (string) ( $quiz['zeitrahmen'] ?? '–' ) ); ?></td></tr>
         <tr><td class="k">Branche</td>       <td class="v"><?php echo esc_html( (string) ( $quiz['branche'] ?? '–' ) ); ?></td></tr>
         <tr><td class="k">Website</td>       <td class="v"><?php echo esc_html( (string) ( $quiz['website'] ?? '–' ) ); ?></td></tr>

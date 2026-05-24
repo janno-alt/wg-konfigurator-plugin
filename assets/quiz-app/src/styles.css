@@ -1,6 +1,12 @@
 /* ============================================================
-   WG-Konfigurator – Frontend-Styles (scoped via .wgk)
+   WG-Konfigurator – Frontend-Styles
+   Scoped via .wgk, gehärtet gegen Theme-Cascades (Elementor etc.)
    ============================================================ */
+
+.wgk,
+.wgk * {
+  box-sizing: border-box;
+}
 
 .wgk {
   --wgk-bg: #141414;
@@ -13,11 +19,12 @@
   --wgk-card-hover: #232323;
 
   font-family: 'Archivo', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 15px;
   color: var(--wgk-fg);
   background: var(--wgk-bg);
-  padding: 32px 28px;
+  padding: 36px 32px;
   border-radius: 12px;
-  max-width: 720px;
+  max-width: 760px;
   margin: 0 auto;
   line-height: 1.5;
 }
@@ -31,15 +38,40 @@
   --wgk-card-hover: #efefef;
 }
 
-.wgk * { box-sizing: border-box; }
+/* ---------- Theme-Reset für alle Form-Elemente innerhalb von .wgk ----------
+   Verhindert dass Elementor/Theme-CSS Cards lime-grün macht o. ä. */
+.wgk button,
+.wgk input,
+.wgk textarea,
+.wgk select {
+  appearance: none;
+  -webkit-appearance: none;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+  text-transform: none;
+  text-decoration: none;
+  background: none;
+  border: none;
+  outline: none;
+  margin: 0;
+  box-shadow: none;
+  border-radius: 0;
+}
 
+.wgk button {
+  cursor: pointer;
+}
+
+/* ---------- Progress ---------- */
 .wgk__progress {
   width: 100%;
   height: 6px;
   background: var(--wgk-border);
   border-radius: 999px;
   overflow: hidden;
-  margin-bottom: 22px;
+  margin-bottom: 26px;
 }
 .wgk__progress-bar {
   height: 100%;
@@ -47,18 +79,27 @@
   transition: width 0.25s ease;
 }
 
-.wgk__title {
+/* ---------- Title + Layout ---------- */
+.wgk .wgk__title {
   font-size: 22px;
   font-weight: 700;
-  margin: 0 0 18px;
-  line-height: 1.2;
+  margin: 0 0 8px;
+  line-height: 1.25;
+  color: var(--wgk-fg);
+}
+.wgk .wgk__subtitle {
+  font-size: 14px;
+  color: var(--wgk-muted);
+  margin: 0 0 22px;
 }
 
-.wgk__content { margin-bottom: 24px; }
+.wgk__content {
+  margin-bottom: 24px;
+}
 
 .wgk__grid {
   display: grid;
-  gap: 10px;
+  gap: 12px;
   margin-bottom: 12px;
 }
 .wgk__grid--2 { grid-template-columns: repeat(2, 1fr); }
@@ -67,63 +108,151 @@
   .wgk__grid--2, .wgk__grid--3 { grid-template-columns: 1fr; }
 }
 
-.wgk__stack { display: flex; flex-direction: column; gap: 8px; }
+.wgk__stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 
-.wgk__card,
-.wgk__row {
+/* ---------- Cards (kritisch! mit höchster Specificity gegen Themes) ---------- */
+.wgk button.wgk__card,
+.wgk button.wgk__row {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 16px 18px;
+  padding: 18px 20px;
   background: var(--wgk-card);
+  background-color: var(--wgk-card);
   border: 1.5px solid var(--wgk-border);
-  border-radius: 8px;
+  border-radius: 10px;
   color: var(--wgk-fg);
   text-align: left;
-  cursor: pointer;
   font-family: inherit;
   font-size: 14px;
-  transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
+  font-weight: 400;
+  line-height: 1.4;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+  width: 100%;
 }
-.wgk__card:hover,
-.wgk__row:hover { background: var(--wgk-card-hover); }
-.wgk__card.is-active,
-.wgk__row.is-active {
+
+.wgk button.wgk__card:hover,
+.wgk button.wgk__row:hover {
+  background-color: var(--wgk-card-hover);
+  border-color: #444;
+}
+
+.wgk button.wgk__card.is-active,
+.wgk button.wgk__row.is-active {
   border-color: var(--wgk-accent);
+  background-color: var(--wgk-card-hover);
   box-shadow: 0 0 0 1px var(--wgk-accent) inset;
 }
-.wgk__card strong { font-size: 15px; }
-.wgk__card span { color: var(--wgk-muted); font-size: 13px; }
-.wgk__card--narrow { padding: 14px 16px; }
 
-.wgk__row {
+.wgk .wgk__card strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 2px;
+  color: var(--wgk-fg);
+}
+
+.wgk .wgk__card span {
+  display: block;
+  color: var(--wgk-muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.wgk button.wgk__card--narrow {
+  padding: 14px 16px;
+}
+
+.wgk button.wgk__row {
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
+  padding: 14px 18px;
 }
 
-.wgk__badge {
+/* ---------- Multi-Select Checkboxes (Feature-Liste) ---------- */
+.wgk__checklist {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+@media (max-width: 540px) {
+  .wgk__checklist { grid-template-columns: 1fr; }
+}
+
+.wgk button.wgk__checkitem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--wgk-card);
+  border: 1.5px solid var(--wgk-border);
+  border-radius: 10px;
+  color: var(--wgk-fg);
+  text-align: left;
+  font-size: 14px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+  width: 100%;
+}
+.wgk button.wgk__checkitem:hover {
+  background-color: var(--wgk-card-hover);
+}
+.wgk button.wgk__checkitem.is-checked {
+  border-color: var(--wgk-accent);
+  background-color: var(--wgk-card-hover);
+}
+.wgk__checkitem-box {
+  width: 20px; height: 20px;
+  border-radius: 5px;
+  border: 1.5px solid var(--wgk-border);
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  font-size: 14px;
+  color: var(--wgk-accent-fg);
+  font-weight: 700;
+}
+.wgk__checkitem.is-checked .wgk__checkitem-box {
+  background: var(--wgk-accent);
+  border-color: var(--wgk-accent);
+}
+
+/* ---------- Badge ---------- */
+.wgk .wgk__badge {
   background: var(--wgk-accent);
   color: var(--wgk-accent-fg);
-  padding: 2px 8px;
+  padding: 3px 10px;
   border-radius: 999px;
   font-size: 11px;
   font-style: normal;
   font-weight: 700;
+  line-height: 1.4;
 }
 
-.wgk__field {
+/* ---------- Inputs / Textarea ---------- */
+.wgk .wgk__field {
   display: block;
-  margin: 16px 0 0;
+  margin: 18px 0 0;
 }
-.wgk__field > span {
+.wgk .wgk__field > span {
   display: block;
   font-size: 13px;
   color: var(--wgk-muted);
   margin-bottom: 6px;
+  font-weight: 500;
 }
-.wgk__field input,
-.wgk__field textarea {
+.wgk input[type="text"],
+.wgk input[type="email"],
+.wgk input[type="url"],
+.wgk textarea {
   width: 100%;
   padding: 12px 14px;
   background: var(--wgk-card);
@@ -132,50 +261,71 @@
   color: var(--wgk-fg);
   font-family: inherit;
   font-size: 14px;
+  line-height: 1.4;
   resize: vertical;
 }
-.wgk__field input:focus,
-.wgk__field textarea:focus {
-  outline: none;
+.wgk input[type="text"]:focus,
+.wgk input[type="email"]:focus,
+.wgk input[type="url"]:focus,
+.wgk textarea:focus {
   border-color: var(--wgk-accent);
+  outline: none;
+}
+.wgk textarea {
+  min-height: 80px;
 }
 
-.wgk__check {
+/* ---------- Checkbox (Lead Opt-In) ---------- */
+.wgk .wgk__check {
   display: flex;
   gap: 10px;
   align-items: flex-start;
   margin: 18px 0 6px;
   font-size: 13px;
   color: var(--wgk-muted);
+  cursor: pointer;
+  line-height: 1.5;
 }
-.wgk__check input { margin-top: 3px; }
+.wgk .wgk__check input[type="checkbox"] {
+  margin-top: 3px;
+  width: 16px;
+  height: 16px;
+  appearance: auto;
+  -webkit-appearance: auto;
+  accent-color: var(--wgk-accent);
+}
 
-.wgk__note {
+/* ---------- Note / Error ---------- */
+.wgk .wgk__note {
   font-size: 12px;
   color: var(--wgk-muted);
   margin: 12px 0 0;
   line-height: 1.6;
 }
-
-.wgk__error {
+.wgk .wgk__error {
   color: #ff7777;
   font-size: 13px;
   margin-top: 12px;
 }
 
+/* ---------- Actions / Buttons ---------- */
 .wgk__actions {
   display: flex;
   gap: 10px;
   justify-content: flex-end;
-  margin-top: 18px;
+  margin-top: 24px;
 }
-.wgk__actions--center { justify-content: center; flex-wrap: wrap; }
+.wgk__actions--center {
+  justify-content: center;
+  flex-wrap: wrap;
+}
 
-.wgk__btn {
+.wgk button.wgk__btn,
+.wgk a.wgk__btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 12px 22px;
+  padding: 13px 24px;
   border-radius: 8px;
   font-weight: 700;
   font-size: 14px;
@@ -183,45 +333,58 @@
   border: 1.5px solid transparent;
   font-family: inherit;
   text-decoration: none;
-  transition: opacity 0.15s ease, transform 0.1s ease;
+  line-height: 1.2;
+  transition: opacity 0.15s ease, border-color 0.15s ease;
 }
-.wgk__btn--primary {
+
+.wgk button.wgk__btn--primary,
+.wgk a.wgk__btn--primary {
   background: var(--wgk-accent);
   color: var(--wgk-accent-fg);
 }
-.wgk__btn--primary:hover { opacity: 0.92; }
-.wgk__btn--primary:disabled { opacity: 0.45; cursor: not-allowed; }
+.wgk button.wgk__btn--primary:hover,
+.wgk a.wgk__btn--primary:hover { opacity: 0.92; }
+.wgk button.wgk__btn--primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 
-.wgk__btn--ghost {
+.wgk button.wgk__btn--ghost,
+.wgk a.wgk__btn--ghost {
   background: transparent;
   color: var(--wgk-fg);
   border-color: var(--wgk-border);
 }
-.wgk__btn--ghost:hover { border-color: var(--wgk-fg); }
+.wgk button.wgk__btn--ghost:hover,
+.wgk a.wgk__btn--ghost:hover { border-color: var(--wgk-fg); }
 
+/* ---------- Result ---------- */
 .wgk__result { text-align: left; }
-.wgk__pricebox {
+
+.wgk .wgk__pricebox {
   border: 2px solid var(--wgk-accent);
   background: var(--wgk-card);
   border-radius: 10px;
-  padding: 18px 20px;
-  margin: 18px 0;
+  padding: 20px 22px;
+  margin: 22px 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
-.wgk__pricebox-label {
+.wgk .wgk__pricebox-label {
   font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 1.2px;
   color: var(--wgk-muted);
+  font-weight: 700;
 }
-.wgk__pricebox-value {
-  font-size: 26px;
+.wgk .wgk__pricebox-value {
+  font-size: 28px;
   font-weight: 700;
   color: var(--wgk-accent);
+  line-height: 1.1;
 }
-.wgk__pricebox-note {
+.wgk .wgk__pricebox-note {
   font-size: 12px;
   color: var(--wgk-muted);
 }

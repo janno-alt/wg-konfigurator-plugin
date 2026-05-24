@@ -100,13 +100,46 @@ TEXT;
     }
 
     private function build_prompt( array $quiz, string $website ): string {
-        $quiz_json = wp_json_encode( $quiz, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT );
-        $website   = trim( $website ) !== '' ? $website : '(keine Website angegeben oder Scraping fehlgeschlagen)';
+        $paket_labels = [
+            'einzel'   => 'Ein fertiges Hauptvideo',
+            'paket'    => 'Hauptvideo + 2–3 Social-Cuts (Reels/Shorts)',
+            'kampagne' => 'Vollkampagne: Hauptvideo + Social-Cuts + Behind-the-Scenes',
+        ];
+        $feature_labels = [
+            'voiceover'    => 'Voiceover/Sprecher:in',
+            'untertitel'   => 'Untertitel',
+            'animation'    => 'Animierte Texte/Lower-Thirds',
+            'drohne'       => 'Drohnen-Aufnahmen',
+            'musik'        => 'Lizenzierte Musik',
+            'mehrsprachig' => 'Mehrsprachige Versionen',
+        ];
+
+        $paket    = $paket_labels[ $quiz['output_paket'] ?? '' ] ?? '(kein Paket gewählt)';
+        $features = array_map(
+            static fn ( $f ) => $feature_labels[ $f ] ?? $f,
+            (array) ( $quiz['features'] ?? [] )
+        );
+        $features_text = $features ? implode( ', ', $features ) : '(keine gewählt)';
+
+        $context = [
+            'Video-Typ'      => (string) ( $quiz['video_typ']   ?? '' ),
+            'Output-Paket'   => $paket,
+            'Gewählte Features' => $features_text,
+            'Zeitrahmen'     => (string) ( $quiz['zeitrahmen']  ?? '' ),
+            'Branche'        => (string) ( $quiz['branche']     ?? '' ),
+            'Website'        => (string) ( $quiz['website']     ?? '' ),
+            'Kunden-Ziel'    => (string) ( $quiz['ziel']        ?? '(kein Freitext)' ),
+        ];
+        $context_str = '';
+        foreach ( $context as $k => $v ) {
+            $context_str .= "- {$k}: {$v}\n";
+        }
+
+        $website = trim( $website ) !== '' ? $website : '(keine Website angegeben oder Scraping fehlgeschlagen)';
 
         return <<<TEXT
-QUIZ-ANTWORTEN:
-{$quiz_json}
-
+KUNDEN-KONFIGURATION:
+{$context_str}
 AUSZUG AUS DER KUNDEN-WEBSITE:
 {$website}
 
@@ -118,6 +151,8 @@ Leite daraus ein konkretes Videokonzept ab. Achte auf:
 - "empfohlene_locations": 2–3 Drehorte beim Kunden vor Ort.
 - "vorbereitungs_checkliste": 4–6 konkrete Items, die der Kunde vor dem Drehtag erledigen sollte.
 - "naechste_schritte": 2–3 Sätze, was nach Anfrage passiert.
+
+Wenn der Kunde Features wie Drohne oder Voiceover gewählt hat, berücksichtige das in story_skizze und checkliste.
 TEXT;
     }
 

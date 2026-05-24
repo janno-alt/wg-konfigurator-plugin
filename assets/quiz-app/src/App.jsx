@@ -2,14 +2,15 @@ import React, { useMemo, useState } from 'react';
 import Quiz from './Quiz.jsx';
 import Result from './Result.jsx';
 
-const STEPS = ['video_typ', 'drehtage', 'zeitrahmen', 'branche', 'lead'];
+const STEPS = ['video_typ', 'output_paket', 'features', 'zeitrahmen', 'kontext', 'lead'];
 
 export default function App({ theme = 'dark' }) {
   const config = window.WG_KONFIGURATOR || {};
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState({
     video_typ: '',
-    drehtage: 1,
+    output_paket: '',
+    features: [],          // string[] – Feature-Toggles
     zeitrahmen: '',
     branche: '',
     website: '',
@@ -60,20 +61,17 @@ export default function App({ theme = 'dark' }) {
         throw new Error(data.message || 'Etwas ist schiefgelaufen.');
       }
       setResult(data);
-      // Tracking-Event
       try {
         window.dataLayer = window.dataLayer || [];
         window.dataLayer.push({
           event: 'konfigurator_completed',
           video_typ: answers.video_typ,
-          drehtage: answers.drehtage,
+          output_paket: answers.output_paket,
           zeitrahmen: answers.zeitrahmen,
           preis_min: data.preis_min,
           preis_max: data.preis_max,
         });
-      } catch (e) {
-        // noop
-      }
+      } catch (e) { /* noop */ }
     } catch (e) {
       setError(e.message);
     } finally {

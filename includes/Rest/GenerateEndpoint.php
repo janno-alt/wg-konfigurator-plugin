@@ -86,13 +86,21 @@ final class GenerateEndpoint {
             return new WP_Error( 'invalid_lead', 'Vorname und gültige E-Mail erforderlich.', [ 'status' => 400 ] );
         }
 
+        // Neue feature-orientierte Felder
+        $features_raw = (array) ( $quiz['features'] ?? [] );
+        $features     = array_values( array_filter( array_map(
+            'sanitize_text_field',
+            array_map( 'strval', $features_raw )
+        ) ) );
+
         $quiz = [
-            'video_typ'   => sanitize_text_field( (string) ( $quiz['video_typ']   ?? '' ) ),
-            'drehtage'    => max( 1, min( 5, (int) ( $quiz['drehtage'] ?? 1 ) ) ),
-            'zeitrahmen'  => sanitize_text_field( (string) ( $quiz['zeitrahmen']  ?? '' ) ),
-            'branche'     => sanitize_text_field( (string) ( $quiz['branche']     ?? '' ) ),
-            'website'     => esc_url_raw( (string) ( $quiz['website']             ?? '' ) ),
-            'ziel'        => sanitize_text_field( (string) ( $quiz['ziel']        ?? '' ) ),
+            'video_typ'    => sanitize_text_field( (string) ( $quiz['video_typ']    ?? '' ) ),
+            'output_paket' => sanitize_text_field( (string) ( $quiz['output_paket'] ?? 'einzel' ) ),
+            'features'     => $features,
+            'zeitrahmen'   => sanitize_text_field( (string) ( $quiz['zeitrahmen']   ?? '' ) ),
+            'branche'      => sanitize_text_field( (string) ( $quiz['branche']      ?? '' ) ),
+            'website'      => esc_url_raw(           (string) ( $quiz['website']      ?? '' ) ),
+            'ziel'         => sanitize_textarea_field( (string) ( $quiz['ziel']      ?? '' ) ),
         ];
 
         $tracking = [
@@ -137,6 +145,32 @@ final class GenerateEndpoint {
             $mailer->send_customer( $lead, $pdf, $concept );
             $mailer->send_admin( $lead, $quiz, $pricing, $pdf );
 
+            // ---- CRM-Mapping ---------------------------------------------------
+            // Das CRM erwartet ein strikteres Schema (drehtage:int, kein output_paket).
+            // Wir mappen unsere feature-orientierten Antworten in das alte Schema und
+            // hängen die neuen Felder zusätzlich an, damit das CRM sie im rawPayload
+            // mitspeichert.
+            $features_label = PriceCalculator::feature_labels( $quiz['features'] );
+            $paket_label    = PriceCalculator::paket_label( $quiz['output_paket'] );
+
+            $ziel_kombiniert = trim( implode( ' | ', array_filter( [
+                $paket_label,
+                $features_label ? 'Features: ' . implode( ', ', $features_label ) : '',
+                $quiz['ziel'] ?: '',
+            ] ) ) );
+
+            $quiz_for_crm = [
+                'video_typ'    => $quiz['video_typ'],
+                'drehtage'     => (int) $pricing['drehtage'],     // intern abgeleitet
+                'zeitrahmen'   => $quiz['zeitrahmen'],
+                'branche'      => $quiz['branche'],
+                'website'      => $quiz['website'],
+                'ziel'         => $ziel_kombiniert,
+                // Zusatz-Felder (gehen ins rawPayload-JSONB)
+                'output_paket' => $quiz['output_paket'],
+                'features'     => $quiz['features'],
+            ];
+
             // Webhook async
             $idempotency = wp_generate_uuid4();
             $webhook     = new WebhookSender();
@@ -144,7 +178,7 @@ final class GenerateEndpoint {
                 'event'           => 'konfigurator.completed',
                 'idempotency_key' => $idempotency,
                 'lead'            => $lead,
-                'quiz'            => $quiz,
+                'quiz'            => $quiz_for_crm,
                 'berechnung'      => $pricing,
                 'ki_konzept'      => $concept,
                 'tracking'        => $tracking,
