@@ -36,6 +36,7 @@ final class Plugin {
         // REST API
         add_action( 'rest_api_init', static function () {
             ( new Rest\GenerateEndpoint() )->register_routes();
+            ( new Rest\StartEndpoint() )->register_routes();
         } );
 
         // Shortcode [wg_konfigurator]

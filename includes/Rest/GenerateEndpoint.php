@@ -88,6 +88,7 @@ final class GenerateEndpoint {
             'vorname'          => $vorname,
             'nachname'         => $nachname,
             'email'            => sanitize_email( (string) ( $lead['email'] ?? '' ) ),
+            'dsgvo_opt_in'     => ! empty( $lead['dsgvo_opt_in'] ),
             'marketing_opt_in' => ! empty( $lead['marketing_opt_in'] ),
         ];
 
@@ -194,11 +195,16 @@ final class GenerateEndpoint {
             ];
 
             // Webhook synchron senden (auf Mittwald + DISABLE_WP_CRON ist async unzuverlässig).
-            $idempotency  = wp_generate_uuid4();
+            // session_id wenn vorhanden = der gleiche idempotency_key wie beim
+            // konfigurator.started Event → CRM kann den started-Lead auf
+            // completed updaten statt neu anzulegen.
+            $session_id   = sanitize_text_field( (string) ( $request->get_param( 'session_id' ) ?? '' ) );
+            $idempotency  = $session_id ?: wp_generate_uuid4();
             $webhook      = new WebhookSender();
             $webhook_result = $webhook->dispatch( [
                 'event'           => 'konfigurator.completed',
                 'idempotency_key' => $idempotency,
+                'session_id'      => $session_id ?: null,
                 'lead'            => $lead,
                 'quiz'            => $quiz_for_crm,
                 'berechnung'      => $pricing,

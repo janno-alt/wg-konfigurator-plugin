@@ -293,15 +293,15 @@ export default function Quiz(props) {
     );
   }
 
-  /* ---------- Step 7: Lead ---------- */
+  /* ---------- Step 7: Lead (Email schon aus Intro, hier nur Name) ---------- */
   if (key === 'lead') {
     const valid = lead.name.trim().split(/\s+/).length >= 2 && /\S+@\S+\.\S+/.test(lead.email);
     return (
       <Step
-        title="Wohin schicken wir dein individuelles PDF?"
-        subtitle="Wir erstellen daraus eine konkrete Analyse + Preis-Range und mailen es dir in wenigen Sekunden zu."
+        title="Fast geschafft – wer bekommt das PDF?"
+        subtitle={`Wir schicken dein Konzept an ${lead.email}. Sag uns noch deinen vollen Namen für die persönliche Ansprache.`}
         canNext={valid && !submitting}
-        nextLabel={submitting ? 'Wird erstellt …' : 'Konzept generieren'}
+        nextLabel={submitting ? 'Wird erstellt …' : 'Konzept erstellen'}
         onNext={onSubmit}
         onBack={onBack}
       >
@@ -313,11 +313,12 @@ export default function Quiz(props) {
             onChange={(e) => setLead({ ...lead, name: e.target.value })}
             placeholder="Anna Müller"
             autoComplete="name"
+            autoFocus
             required
           />
         </label>
         <label className="wgk__field">
-          <span>E-Mail</span>
+          <span>E-Mail (aus dem Start)</span>
           <input
             type="email"
             value={lead.email}
@@ -327,15 +328,7 @@ export default function Quiz(props) {
             required
           />
         </label>
-        <label className="wgk__check">
-          <input
-            type="checkbox"
-            checked={lead.marketing_opt_in}
-            onChange={(e) => setLead({ ...lead, marketing_opt_in: e.target.checked })}
-          />
-          <span>Ja, gelegentlich Updates zu Videomarketing-Tipps von WG-Digital erhalten (jederzeit abbestellbar).</span>
-        </label>
-        <p className="wgk__note">Kein Spam, keine automatischen Newsletter ohne dein OK. Alle Preise verstehen sich netto.</p>
+        <p className="wgk__note">Alle Preise verstehen sich netto, zzgl. MwSt.</p>
         {error && <p className="wgk__error">{error}</p>}
       </Step>
     );
