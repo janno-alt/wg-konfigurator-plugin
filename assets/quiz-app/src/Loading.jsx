@@ -1,16 +1,19 @@
 import React, { useEffect, useState } from 'react';
 
 /**
- * Loading-Screen während der eigentliche Submit-Request läuft.
- * Wir simulieren Phasen visuell — der Backend-Submit ist ein einzelner
- * Roundtrip, aber dem User zeigen wir konkret was gerade passiert.
+ * Loading-Screen während der Submit-Request läuft.
+ *
+ * Phasen sind kunden-orientiert formuliert — keine internen Prozesse
+ * ("CRM" etc.) sichtbar. Die Animation ist client-side getriggert,
+ * der echte Backend-Submit ist ein einzelner Roundtrip.
  */
 const PHASES = [
-  { id: 'scrape',  label: 'Deine Website wird analysiert …',           ms: 2500 },
-  { id: 'gemini',  label: 'KI erstellt dein Konzept …',                ms: 8000 },
-  { id: 'pdf',     label: 'PDF wird gerendert …',                      ms: 3500 },
-  { id: 'mail',    label: 'E-Mail wird versendet …',                   ms: 2000 },
-  { id: 'crm',     label: 'Lead wird im CRM angelegt …',               ms: 1500 },
+  { id: 'scrape',  label: 'Wir nehmen dein Unternehmen unter die Lupe …', icon: '🔍', ms: 2500 },
+  { id: 'analyze', label: 'Was macht euch besonders? Wir lesen mit …',    icon: '💡', ms: 3000 },
+  { id: 'gemini',  label: 'Unsere KI brainstormt Video-Ideen für dich …', icon: '🧠', ms: 5500 },
+  { id: 'concept', label: 'Dein individuelles Konzept entsteht …',        icon: '✍️', ms: 4000 },
+  { id: 'pdf',     label: 'Wir packen alles in dein PDF …',               icon: '📄', ms: 3000 },
+  { id: 'mail',    label: 'Dein Konzept ist gleich in deinem Postfach …', icon: '📬', ms: 2000 },
 ];
 
 export default function Loading() {
@@ -48,7 +51,7 @@ export default function Loading() {
           return (
             <li key={p.id} className={`wgk__loading-item wgk__loading-item--${state}`}>
               <span className="wgk__loading-bullet" aria-hidden="true">
-                {state === 'done' ? '✓' : state === 'active' ? '…' : ''}
+                {state === 'done' ? '✓' : state === 'active' ? p.icon : ''}
               </span>
               <span>{p.label}</span>
             </li>

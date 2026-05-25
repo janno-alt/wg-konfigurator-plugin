@@ -18,22 +18,26 @@ final class PriceCalculator {
 
     private const KONZEPT_PAUSCHALE = 1000;
 
-    /** @var array<string,array<string,mixed>> */
+    /** @var array<string,array<string,mixed>>
+     *
+     * Preis-Range pro Typ ist auf max ~50 % Spread eingestellt, generell etwas
+     * zurückhaltend kalkuliert (lieber niedriger als abschreckend hoch).
+     */
     private const VIDEO_TYPES = [
-        'imagefilm'       => [ 'label' => 'Imagefilm',               'model' => 'flat',       'base_min' => 2000, 'base_max' => 5000, 'has_konzept' => true,  'has_drohne' => true,  'has_voiceover' => true,  'has_animation' => true,  'has_sound' => true,  'has_mehrsprachig' => true,  'has_paket' => true,  'has_laenge' => true  ],
-        'werbespot'       => [ 'label' => 'Werbespot',               'model' => 'flat',       'base_min' => 3000, 'base_max' => 7000, 'has_konzept' => true,  'has_drohne' => true,  'has_voiceover' => true,  'has_animation' => true,  'has_sound' => true,  'has_mehrsprachig' => true,  'has_paket' => true,  'has_laenge' => true  ],
-        'recruiting'      => [ 'label' => 'Recruiting-Video',        'model' => 'flat',       'base_min' => 2500, 'base_max' => 6000, 'has_konzept' => true,  'has_drohne' => true,  'has_voiceover' => true,  'has_animation' => true,  'has_sound' => true,  'has_mehrsprachig' => true,  'has_paket' => true,  'has_laenge' => true  ],
+        'imagefilm'       => [ 'label' => 'Imagefilm',               'model' => 'flat',       'base_min' => 2000, 'base_max' => 3000, 'has_konzept' => true,  'has_drohne' => true,  'has_voiceover' => true,  'has_animation' => true,  'has_sound' => true,  'has_mehrsprachig' => true,  'has_paket' => true,  'has_laenge' => true  ],
+        'werbespot'       => [ 'label' => 'Werbespot',               'model' => 'flat',       'base_min' => 2500, 'base_max' => 3750, 'has_konzept' => true,  'has_drohne' => true,  'has_voiceover' => true,  'has_animation' => true,  'has_sound' => true,  'has_mehrsprachig' => true,  'has_paket' => true,  'has_laenge' => true  ],
+        'recruiting'      => [ 'label' => 'Recruiting-Video',        'model' => 'flat',       'base_min' => 2500, 'base_max' => 3750, 'has_konzept' => true,  'has_drohne' => true,  'has_voiceover' => true,  'has_animation' => true,  'has_sound' => true,  'has_mehrsprachig' => true,  'has_paket' => true,  'has_laenge' => true  ],
         'reel_paket'      => [ 'label' => 'Reel-Paket (12 Reels)',   'model' => 'fixed',      'base_min' => 1500, 'base_max' => 1500, 'has_konzept' => false, 'has_drohne' => true,  'has_voiceover' => false, 'has_animation' => true,  'has_sound' => false, 'has_mehrsprachig' => false, 'has_paket' => false, 'has_laenge' => false, 'drehtage' => 0.5, 'payment_note' => '3 × 500 € monatlich' ],
-        'erklaer_real'    => [ 'label' => 'Erklärvideo (Real)',      'model' => 'per_minute', 'base_min' => 1000, 'base_max' => 2500, 'has_konzept' => true,  'has_drohne' => true,  'has_voiceover' => true,  'has_animation' => true,  'has_sound' => true,  'has_mehrsprachig' => true,  'has_paket' => false, 'has_laenge' => true  ],
-        'erklaer_anim'    => [ 'label' => 'Erklärvideo (2D)',        'model' => 'per_minute', 'base_min' => 1500, 'base_max' => 3000, 'has_konzept' => true,  'has_drohne' => false, 'has_voiceover' => true,  'has_animation' => false, 'has_sound' => true,  'has_mehrsprachig' => true,  'has_paket' => false, 'has_laenge' => true  ],
-        'animation_3d'    => [ 'label' => '3D-Animation',            'model' => 'per_minute', 'base_min' => 2000, 'base_max' => 4000, 'has_konzept' => true,  'has_drohne' => false, 'has_voiceover' => true,  'has_animation' => false, 'has_sound' => true,  'has_mehrsprachig' => true,  'has_paket' => false, 'has_laenge' => true  ],
-        'animation_tech'  => [ 'label' => 'Technische Animation',    'model' => 'per_minute', 'base_min' => 2000, 'base_max' => 6000, 'has_konzept' => true,  'has_drohne' => false, 'has_voiceover' => true,  'has_animation' => false, 'has_sound' => true,  'has_mehrsprachig' => true,  'has_paket' => false, 'has_laenge' => true  ],
+        'erklaer_real'    => [ 'label' => 'Erklärvideo (Real)',      'model' => 'per_minute', 'base_min' => 1000, 'base_max' => 1500, 'has_konzept' => true,  'has_drohne' => true,  'has_voiceover' => true,  'has_animation' => true,  'has_sound' => true,  'has_mehrsprachig' => true,  'has_paket' => false, 'has_laenge' => true  ],
+        'erklaer_anim'    => [ 'label' => 'Erklärvideo (2D)',        'model' => 'per_minute', 'base_min' => 1500, 'base_max' => 2250, 'has_konzept' => true,  'has_drohne' => false, 'has_voiceover' => true,  'has_animation' => false, 'has_sound' => true,  'has_mehrsprachig' => true,  'has_paket' => false, 'has_laenge' => true  ],
+        'animation_3d'    => [ 'label' => '3D-Animation',            'model' => 'per_minute', 'base_min' => 2000, 'base_max' => 3000, 'has_konzept' => true,  'has_drohne' => false, 'has_voiceover' => true,  'has_animation' => false, 'has_sound' => true,  'has_mehrsprachig' => true,  'has_paket' => false, 'has_laenge' => true  ],
+        'animation_tech'  => [ 'label' => 'Technische Animation',    'model' => 'per_minute', 'base_min' => 2500, 'base_max' => 3750, 'has_konzept' => true,  'has_drohne' => false, 'has_voiceover' => true,  'has_animation' => false, 'has_sound' => true,  'has_mehrsprachig' => true,  'has_paket' => false, 'has_laenge' => true  ],
     ];
 
     private const PAKET = [
         'einzel'   => [ 'mult_min' => 1.0,  'mult_max' => 1.0,  'drehtage' => 1, 'label' => 'Ein Hauptvideo' ],
-        'paket'    => [ 'mult_min' => 1.30, 'mult_max' => 1.40, 'drehtage' => 2, 'label' => 'Hauptvideo + Social-Cuts' ],
-        'kampagne' => [ 'mult_min' => 1.50, 'mult_max' => 1.80, 'drehtage' => 3, 'label' => 'Vollkampagne' ],
+        'paket'    => [ 'mult_min' => 1.30, 'mult_max' => 1.35, 'drehtage' => 2, 'label' => 'Hauptvideo + Social-Cuts' ],
+        'kampagne' => [ 'mult_min' => 1.50, 'mult_max' => 1.65, 'drehtage' => 3, 'label' => 'Vollkampagne' ],
     ];
 
     private const LAENGE = [

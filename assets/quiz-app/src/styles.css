@@ -30,108 +30,81 @@
 }
 
 /* ============================================================
-   INTRO / Start-Screen
+   INTRO / Start-Screen (kompakt)
    ============================================================ */
 .wgk__intro {
-  max-width: 760px;
-  text-align: left;
+  max-width: 580px;
+  padding: 28px 28px;
 }
 
 .wgk__intro-hero {
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 18px;
 }
 
 .wgk__intro-eyebrow {
   display: inline-block;
-  font-size: 11px;
+  font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 1.6px;
   color: var(--wgk-accent);
   font-weight: 700;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .wgk__intro-headline {
-  font-size: 34px;
-  line-height: 1.15;
-  margin: 0 0 16px;
+  font-size: 26px;
+  line-height: 1.2;
+  margin: 0 0 10px;
   font-weight: 800;
   color: var(--wgk-fg);
 }
 .wgk__intro-headline .accent { color: var(--wgk-accent); }
 
 .wgk__intro-sub {
-  font-size: 16px;
-  color: #BBB;
-  line-height: 1.6;
+  font-size: 14px;
+  color: var(--wgk-muted);
+  line-height: 1.55;
   margin: 0;
 }
 
-.wgk__intro-steps {
-  list-style: none;
-  margin: 0 0 32px;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-}
-@media (max-width: 640px) {
-  .wgk__intro-steps { grid-template-columns: 1fr; }
-}
-
-.wgk__intro-steps li {
-  background-color: #1a1a1a;
-  border: 1.5px solid var(--wgk-border);
-  border-radius: 12px;
-  padding: 18px 16px;
+.wgk__intro-flow {
   display: flex;
-  gap: 12px;
-  align-items: flex-start;
-}
-
-.wgk__intro-step-num {
-  flex: 0 0 auto;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background-color: var(--wgk-accent);
-  color: var(--wgk-accent-fg);
-  font-weight: 800;
-  font-size: 16px;
-  display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
+  margin: 18px 0 22px;
+  font-size: 12px;
+  color: var(--wgk-muted);
+  flex-wrap: wrap;
 }
-
-.wgk__intro-steps li div {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
-.wgk__intro-steps li strong {
-  color: var(--wgk-fg);
-  font-size: 15px;
+.wgk__intro-flow strong {
+  color: var(--wgk-accent);
   font-weight: 700;
+  margin-right: 4px;
 }
-
-.wgk__intro-steps li span {
-  color: #999;
-  font-size: 13px;
-  line-height: 1.45;
+.wgk__intro-flow-arrow {
+  color: #555;
+  font-weight: 700;
 }
 
 .wgk__intro-form {
   background-color: #1a1a1a;
   border: 1.5px solid var(--wgk-border);
-  border-radius: 14px;
-  padding: 24px 22px;
+  border-radius: 12px;
+  padding: 20px 20px 18px;
 }
 
-.wgk__intro-check {
-  align-items: flex-start;
+.wgk__intro-form-intro {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: var(--wgk-muted);
+  font-weight: 500;
+}
+
+.wgk__intro-optin {
+  margin-top: 14px !important;
+  margin-bottom: 0 !important;
 }
 
 .wgk__intro-fielderror {
@@ -144,16 +117,20 @@
 .wgk__intro-cta {
   width: 100%;
   margin-top: 18px;
-  padding: 16px 24px !important;
-  font-size: 16px !important;
+  padding: 14px 24px !important;
+  font-size: 15px !important;
 }
 
-.wgk__intro-note {
-  margin: 14px 0 0;
-  font-size: 12px;
+.wgk__intro-legal {
+  margin: 12px 0 0;
+  font-size: 11px;
   color: var(--wgk-muted);
   line-height: 1.55;
   text-align: center;
+}
+.wgk__intro-legal a {
+  color: var(--wgk-muted);
+  text-decoration: underline;
 }
 
 /* ============================================================
@@ -673,6 +650,52 @@
 .wgk__checkitem.is-checked .wgk__checkitem-box {
   background: var(--wgk-accent);
   border-color: var(--wgk-accent);
+}
+
+/* ---------- Feature-Item mit Tooltip ---------- */
+.wgk__checkitem-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.wgk .wgk__checkitem-info {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #2a2a2a;
+  color: var(--wgk-muted);
+  font-size: 12px;
+  font-weight: 700;
+  font-style: italic;
+  font-family: serif;
+  flex: 0 0 auto;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.wgk .wgk__checkitem-info:hover,
+.wgk__checkitem-wrap.has-info .wgk__checkitem-info {
+  background-color: var(--wgk-accent);
+  color: var(--wgk-accent-fg);
+}
+
+.wgk__checkitem-tooltip {
+  background-color: #0f0f0f;
+  border: 1px solid var(--wgk-accent);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: #DDD;
+  animation: wgkTooltipIn 0.18s ease-out;
+}
+@keyframes wgkTooltipIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* ---------- Badge ---------- */

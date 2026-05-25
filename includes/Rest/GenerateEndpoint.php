@@ -9,6 +9,7 @@ use WP_REST_Request;
 use WP_REST_Response;
 use WP_REST_Server;
 use WG\Konfigurator\Admin\Settings;
+use WG\Konfigurator\Services\EmailDomain;
 use WG\Konfigurator\Services\GeminiClient;
 use WG\Konfigurator\Services\Mailer;
 use WG\Konfigurator\Services\PdfGenerator;
@@ -140,11 +141,42 @@ final class GenerateEndpoint {
 
         // ----- Pipeline -----
         try {
-            $scraper = new WebsiteScraper();
-            $excerpt = $quiz['website'] !== '' ? $scraper->scrape( $quiz['website'] ) : '';
+            // Website-Priorität: User-Eingabe > Email-Domain-Auto-Discovery
+            $website_for_scrape = $quiz['website'];
+            $website_from_email = false;
+            if ( $website_for_scrape === '' ) {
+                $inferred = EmailDomain::infer_website( $lead['email'] );
+                if ( $inferred !== null ) {
+                    $website_for_scrape = $inferred;
+                    $website_from_email = true;
+                }
+            }
 
-            $gemini  = new GeminiClient();
-            $concept = $gemini->generate_concept( $quiz, $excerpt );
+            $scraper = new WebsiteScraper();
+            $excerpt = $website_for_scrape !== '' ? $scraper->scrape( $website_for_scrape ) : '';
+
+            // Wenn nichts gescraped werden konnte (weder User-Website noch Email-Domain
+            // hat Inhalte geliefert), kein Gemini-Call — wir generieren das PDF mit
+            // einem Hinweis-Block statt einem schwachen Konzept.
+            $has_website_context = trim( $excerpt ) !== '';
+
+            if ( $has_website_context ) {
+                $gemini  = new GeminiClient();
+                $concept = $gemini->generate_concept( $quiz, $excerpt );
+            } else {
+                $concept = $this->fallback_concept_no_website( $quiz );
+            }
+
+            // Im Quiz für die spätere Anzeige (PDF/Mail) das tatsächlich verwendete
+            // Website-Feld setzen, damit klar ist, woher wir die Daten haben.
+            if ( $website_from_email && $has_website_context ) {
+                $quiz['website'] = $website_for_scrape;
+                $quiz['website_source'] = 'email_domain';
+            } elseif ( $quiz['website'] !== '' ) {
+                $quiz['website_source'] = 'user';
+            } else {
+                $quiz['website_source'] = 'none';
+            }
 
             $calc    = new PriceCalculator();
             $pricing = $calc->calculate( $quiz );
@@ -240,6 +272,33 @@ final class GenerateEndpoint {
             'express_aufschlag' => $pricing['express_aufschlag'],
             'naechste_schritte' => $concept['naechste_schritte'] ?? '',
         ], 200 );
+    }
+
+    /**
+     * Wenn weder User-Website noch Email-Domain Inhalte geliefert haben,
+     * generieren wir KEIN KI-Konzept (das wäre nur Schauspielerei).
+     * Stattdessen liefert das PDF einen klaren Hinweis + Termin-CTA.
+     *
+     * @return array<string,mixed>
+     */
+    private function fallback_concept_no_website( array $quiz ): array {
+        $branche = $quiz['branche'] ?: 'deinem Unternehmen';
+        return [
+            '_no_website' => true,
+            'wirkungs_hypothese'       => sprintf(
+                'Für ein wirklich passgenaues Konzept brauchen wir Einblick in %s. Lass uns 30 Minuten reden.',
+                $branche
+            ),
+            'unternehmens_analyse'     => 'Eine individuelle Analyse konnten wir hier nicht durchführen, weil uns keine Website-Information vorlag (weder im Feld Website noch über die E-Mail-Domain). Wir würden uns nicht erlauben, an dieser Stelle Hypothesen über dein Geschäft zu erfinden – das wäre weder ehrlich noch hilfreich.',
+            'video_botschaften'        => [
+                'Buche einen 30-Min-Termin – dann hörst du eine konkrete Einschätzung statt KI-Vermutungen.',
+                'Schicke uns kurz einen Link zu eurer Website oder eurem Profil per Mail – wir liefern dir das Konzept dann persönlich nach.',
+            ],
+            'empfohlene_protagonisten' => [],
+            'empfohlene_locations'     => [],
+            'vorbereitungs_checkliste' => [],
+            'naechste_schritte'        => 'Buche dir direkt einen unverbindlichen 30-Minuten-Slot – dort definieren wir gemeinsam das Konzept und du bekommst eine konkrete Einschätzung.',
+        ];
     }
 
     private function client_ip( WP_REST_Request $request ): string {

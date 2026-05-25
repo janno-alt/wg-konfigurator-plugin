@@ -11,130 +11,74 @@
 const KONZEPT_PAUSCHALE = 1000;
 
 const VIDEO_TYPES = {
-  // ---------- Klassische Videoproduktion ----------
+  // ---------- Klassische Videoproduktion (max ~50% Spread) ----------
   imagefilm: {
     label: 'Imagefilm',
     model: 'flat',
-    base_min: 2000,
-    base_max: 5000,
-    has_konzept: true,
-    has_drohne: true,
-    has_voiceover: true,
-    has_animation: true,
-    has_sound: true,
-    has_mehrsprachig: true,
-    has_paket: true,
-    has_laenge: true,
+    base_min: 2000, base_max: 3000,
+    has_konzept: true, has_drohne: true, has_voiceover: true, has_animation: true, has_sound: true, has_mehrsprachig: true,
+    has_paket: true,   has_laenge: true,
   },
   werbespot: {
     label: 'Werbespot',
     model: 'flat',
-    base_min: 3000,
-    base_max: 7000,
-    has_konzept: true,
-    has_drohne: true,
-    has_voiceover: true,
-    has_animation: true,
-    has_sound: true,
-    has_mehrsprachig: true,
-    has_paket: true,
-    has_laenge: true,
+    base_min: 2500, base_max: 3750,
+    has_konzept: true, has_drohne: true, has_voiceover: true, has_animation: true, has_sound: true, has_mehrsprachig: true,
+    has_paket: true,   has_laenge: true,
   },
   recruiting: {
     label: 'Recruiting-Video',
     model: 'flat',
-    base_min: 2500,
-    base_max: 6000,
-    has_konzept: true,
-    has_drohne: true,
-    has_voiceover: true,
-    has_animation: true,
-    has_sound: true,
-    has_mehrsprachig: true,
-    has_paket: true,
-    has_laenge: true,
+    base_min: 2500, base_max: 3750,
+    has_konzept: true, has_drohne: true, has_voiceover: true, has_animation: true, has_sound: true, has_mehrsprachig: true,
+    has_paket: true,   has_laenge: true,
   },
   reel_paket: {
     label: 'Reel-Paket (12 Reels)',
     model: 'fixed',
-    base_min: 1500,
-    base_max: 1500,
-    has_konzept: false, // ist im Festpreis
-    has_drohne: true,
-    has_voiceover: false,
-    has_animation: true,
-    has_sound: false,
-    has_mehrsprachig: false,
-    has_paket: false,
-    has_laenge: false,
+    base_min: 1500, base_max: 1500,
+    has_konzept: false, has_drohne: true, has_voiceover: false, has_animation: true, has_sound: false, has_mehrsprachig: false,
+    has_paket: false,   has_laenge: false,
     drehtage: 0.5,
     payment_note: '3 × 500 € monatlich',
   },
 
-  // ---------- Erklärvideo & Animation (pro Minute) ----------
+  // ---------- Erklärvideo & Animation (pro Minute, max ~50% Spread) ----------
   erklaer_real: {
     label: 'Erklärvideo (Real-Material)',
     model: 'per_minute',
-    base_min: 1000,
-    base_max: 2500,
-    has_konzept: true,
-    has_drohne: true,
-    has_voiceover: true,
-    has_animation: true,
-    has_sound: true,
-    has_mehrsprachig: true,
-    has_paket: false,
-    has_laenge: true,
+    base_min: 1000, base_max: 1500,
+    has_konzept: true, has_drohne: true, has_voiceover: true, has_animation: true, has_sound: true, has_mehrsprachig: true,
+    has_paket: false,  has_laenge: true,
   },
   erklaer_anim: {
     label: 'Erklärvideo (Animiert / 2D)',
     model: 'per_minute',
-    base_min: 1500,
-    base_max: 3000,
-    has_konzept: true,
-    has_drohne: false,
-    has_voiceover: true,
-    has_animation: false, // ist schon eine Animation
-    has_sound: true,
-    has_mehrsprachig: true,
-    has_paket: false,
-    has_laenge: true,
+    base_min: 1500, base_max: 2250,
+    has_konzept: true, has_drohne: false, has_voiceover: true, has_animation: false, has_sound: true, has_mehrsprachig: true,
+    has_paket: false,  has_laenge: true,
   },
   animation_3d: {
     label: '3D-Animation',
     model: 'per_minute',
-    base_min: 2000,
-    base_max: 4000,
-    has_konzept: true,
-    has_drohne: false,
-    has_voiceover: true,
-    has_animation: false,
-    has_sound: true,
-    has_mehrsprachig: true,
-    has_paket: false,
-    has_laenge: true,
+    base_min: 2000, base_max: 3000,
+    has_konzept: true, has_drohne: false, has_voiceover: true, has_animation: false, has_sound: true, has_mehrsprachig: true,
+    has_paket: false,  has_laenge: true,
   },
   animation_tech: {
     label: 'Technische Animation',
     model: 'per_minute',
-    base_min: 2000,
-    base_max: 6000,
-    has_konzept: true,
-    has_drohne: false,
-    has_voiceover: true,
-    has_animation: false,
-    has_sound: true,
-    has_mehrsprachig: true,
-    has_paket: false,
-    has_laenge: true,
+    base_min: 2500, base_max: 3750,
+    has_konzept: true, has_drohne: false, has_voiceover: true, has_animation: false, has_sound: true, has_mehrsprachig: true,
+    has_paket: false,  has_laenge: true,
   },
 };
 
 // Drehtage-Mapping aus Output-Paket
 const PAKET = {
   einzel:   { mult_min: 1.0,  mult_max: 1.0,  drehtage: 1, label: 'Ein Hauptvideo' },
-  paket:    { mult_min: 1.30, mult_max: 1.40, drehtage: 2, label: 'Hauptvideo + Social-Cuts' },
-  kampagne: { mult_min: 1.50, mult_max: 1.80, drehtage: 3, label: 'Vollkampagne' },
+  paket:    { mult_min: 1.30, mult_max: 1.35, drehtage: 2, label: 'Hauptvideo + Social-Cuts' },
+  kampagne: { mult_min: 1.50, mult_max: 1.65, drehtage: 3, label: 'Vollkampagne' },
 };
 
 // Längen-Multiplikator (flat) und Mittelwert-Minuten (per_minute)
@@ -355,7 +299,9 @@ export function isFeatureAvailable(videoType, featureId) {
   }[featureId] || false;
 }
 
-/** Public: Quiz-Steps die für diesen Video-Typ relevant sind */
+/** Public: Quiz-Steps die für diesen Video-Typ relevant sind.
+ *  Lead (Name+Email) ist NICHT mehr im Quiz — wird im Intro abgefragt.
+ *  Kontext ist der Submit-Step. */
 export function stepsForType(videoType) {
   const type = VIDEO_TYPES[videoType];
   if (!type) return ['video_typ'];
@@ -363,7 +309,7 @@ export function stepsForType(videoType) {
   const steps = ['video_typ'];
   if (type.has_paket)   steps.push('output_paket');
   if (type.has_laenge)  steps.push('video_laenge');
-  steps.push('features', 'zeitrahmen', 'kontext', 'lead');
+  steps.push('features', 'zeitrahmen', 'kontext');
   return steps;
 }
 

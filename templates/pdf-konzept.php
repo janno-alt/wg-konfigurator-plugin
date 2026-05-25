@@ -187,17 +187,40 @@ $fmt_eur = static function ( $n ): string {
 <!-- ============== SEITE 3: Unternehmens-Analyse + Botschaften ============== -->
 <div class="page">
     <span class="accent-bar"></span>
-    <h2>Was dich auszeichnet</h2>
-    <p style="line-height:1.7;">
-        <?php echo nl2br( esc_html( (string) ( $concept['unternehmens_analyse'] ?? '–' ) ) ); ?>
-    </p>
 
-    <h3>Das sollte im Video herausgestellt werden</h3>
-    <ul>
-        <?php foreach ( (array) ( $concept['video_botschaften'] ?? [] ) as $b ) : ?>
-            <li><?php echo esc_html( (string) $b ); ?></li>
-        <?php endforeach; ?>
-    </ul>
+    <?php if ( ! empty( $concept['_no_website'] ) ) : ?>
+        <h2 style="color:#FF9F1C;">Hinweis: Keine Website-Analyse möglich</h2>
+        <div style="background:#2a1f0a;border:2px solid #FF9F1C;padding:18pt 20pt;border-radius:6pt;margin-bottom:18pt;">
+            <p style="margin:0;line-height:1.7;color:#FBFBFB;">
+                <?php echo nl2br( esc_html( (string) ( $concept['unternehmens_analyse'] ?? '' ) ) ); ?>
+            </p>
+        </div>
+
+        <h3>So geht's am schnellsten weiter</h3>
+        <ul>
+            <?php foreach ( (array) ( $concept['video_botschaften'] ?? [] ) as $b ) : ?>
+                <li><?php echo esc_html( (string) $b ); ?></li>
+            <?php endforeach; ?>
+        </ul>
+
+        <h3 style="margin-top:18pt;">Direkt-Termin buchen</h3>
+        <p>
+            <a href="https://cal.meetergo.com/janno-fleischer/30-min-meeting-or-janno-fleischer"
+               style="color:<?php echo esc_attr( $brand ); ?>;font-weight:700;">cal.meetergo.com/janno-fleischer</a>
+        </p>
+    <?php else : ?>
+        <h2>Was dich auszeichnet</h2>
+        <p style="line-height:1.7;">
+            <?php echo nl2br( esc_html( (string) ( $concept['unternehmens_analyse'] ?? '–' ) ) ); ?>
+        </p>
+
+        <h3>Das sollte im Video herausgestellt werden</h3>
+        <ul>
+            <?php foreach ( (array) ( $concept['video_botschaften'] ?? [] ) as $b ) : ?>
+                <li><?php echo esc_html( (string) $b ); ?></li>
+            <?php endforeach; ?>
+        </ul>
+    <?php endif; ?>
 
     <div class="footer">
         Konzept <?php echo esc_html( $today ); ?>

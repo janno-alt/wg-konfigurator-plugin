@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { isFeatureAvailable } from './pricing.js';
 
 /* ============================================================
@@ -6,6 +6,8 @@ import { isFeatureAvailable } from './pricing.js';
    - 8 Video-Typen in 2 Sektionen
    - Quiz-Flow verzweigt je nach Typ (siehe stepsForType)
    - Feature-Liste filtert sich je nach Typ
+   - Kontext-Step ist der Submit-Step (Name/Email wurden im Intro erfasst)
+   - Tooltips für Features
    ============================================================ */
 
 const VIDEO_TYPEN_CLASSIC = [
@@ -36,11 +38,36 @@ const VIDEO_LAENGEN = [
 ];
 
 const FEATURES = [
-  { id: 'voiceover',    label: 'Voiceover / Sprecher:in',        icon: '🎙️' },
-  { id: 'animation',    label: 'Animierte Texte / Lower-Thirds', icon: '✨' },
-  { id: 'drohne',       label: 'Drohnen-Aufnahmen',              icon: '🚁' },
-  { id: 'sound',        label: 'Sound Design (Atmo, SFX)',       icon: '🔊' },
-  { id: 'mehrsprachig', label: 'Mehrsprachige Versionen',        icon: '🌐' },
+  {
+    id: 'voiceover',
+    label: 'Voiceover / Sprecher:in',
+    icon: '🎙️',
+    tooltip: 'Professionelle Stimme spricht den Text ein – m/w, jung/reif, freundlich/seriös. Wir wählen passend zu deiner Marke.',
+  },
+  {
+    id: 'animation',
+    label: 'Bewegte Text-Einblendungen',
+    icon: '✨',
+    tooltip: 'Animierte Texte und Namens-Einblendungen (Lower-Thirds): „Frau Müller, Pflegedienstleitung". Hebt Aussagen hervor und macht das Video lebendiger.',
+  },
+  {
+    id: 'drohne',
+    label: 'Drohnen-Aufnahmen',
+    icon: '🚁',
+    tooltip: 'Luftaufnahmen für Cinematic-Look. Ideal für Außen-Locations, Gebäude, Werksgelände oder Landschaft. Wir kommen mit eigener Drohne + Pilotenlizenz.',
+  },
+  {
+    id: 'sound',
+    label: 'Sound Design (Atmo & SFX)',
+    icon: '🔊',
+    tooltip: 'Atmosphäre, gezielte Soundeffekte und Akzente – das was den Unterschied zwischen „Video" und „Kino" macht. Lizenzierte Musik ist bei uns immer schon Standard.',
+  },
+  {
+    id: 'mehrsprachig',
+    label: 'Mehrsprachige Versionen',
+    icon: '🌐',
+    tooltip: 'Zusätzliche Sprachversion (z. B. Englisch). Inkl. Übersetzung und passendem Voiceover.',
+  },
 ];
 
 const ZEITRAHMEN = [
@@ -61,11 +88,12 @@ const BRANCHEN = [
 
 export default function Quiz(props) {
   const {
-    step, steps, answers, setAnswers, lead, setLead,
+    step, steps, answers, setAnswers, lead,
     onNext, onBack, onSubmit, submitting, error,
   } = props;
 
   const key = steps[step];
+  const isLastStep = step === steps.length - 1;
 
   function set(field, value) {
     setAnswers((a) => ({ ...a, [field]: value }));
@@ -127,7 +155,7 @@ export default function Quiz(props) {
     return (
       <Step
         title="Was möchtest du am Ende in der Hand haben?"
-        subtitle="Du musst nichts über Drehtage oder Schnitt-Stunden wissen. Wähle einfach das Liefer-Paket, das zu deinem Vorhaben passt."
+        subtitle="Du musst nichts über Drehtage wissen. Wähle einfach das Liefer-Paket, das zu deinem Vorhaben passt."
         canNext={!!answers.output_paket}
         onNext={onNext}
         onBack={onBack}
@@ -179,7 +207,7 @@ export default function Quiz(props) {
     );
   }
 
-  /* ---------- Step 4: Features (gefiltert nach Typ-Support) ---------- */
+  /* ---------- Step 4: Features (mit Tooltips) ---------- */
   if (key === 'features') {
     const sel = Array.isArray(answers.features) ? answers.features : [];
     const availableFeatures = FEATURES.filter((f) => isFeatureAvailable(answers.video_typ, f.id));
@@ -187,7 +215,7 @@ export default function Quiz(props) {
     return (
       <Step
         title="Welche Features soll dein Video haben?"
-        subtitle="Mehrfach-Auswahl möglich. Untertitel und lizenzierte Musik sind bei uns immer Standard – das musst du nicht extra wählen."
+        subtitle="Mehrfach-Auswahl möglich. Untertitel und lizenzierte Musik sind bei uns immer Standard. Tippe auf das (i) für eine Erklärung."
         canNext={true}
         nextLabel="Weiter"
         onNext={onNext}
@@ -197,21 +225,14 @@ export default function Quiz(props) {
           <p className="wgk__note">Für diese Auswahl sind alle Standard-Features bereits inklusive.</p>
         ) : (
           <div className="wgk__checklist">
-            {availableFeatures.map((f) => {
-              const checked = sel.includes(f.id);
-              return (
-                <button
-                  type="button"
-                  key={f.id}
-                  className={`wgk__checkitem ${checked ? 'is-checked' : ''}`}
-                  onClick={() => toggleFeature(f.id)}
-                >
-                  <span className="wgk__checkitem-icon">{f.icon}</span>
-                  <span className="wgk__checkitem-label">{f.label}</span>
-                  <span className="wgk__checkitem-box">{checked ? '✓' : ''}</span>
-                </button>
-              );
-            })}
+            {availableFeatures.map((f) => (
+              <FeatureItem
+                key={f.id}
+                feature={f}
+                checked={sel.includes(f.id)}
+                onToggle={() => toggleFeature(f.id)}
+              />
+            ))}
           </div>
         )}
       </Step>
@@ -244,14 +265,15 @@ export default function Quiz(props) {
     );
   }
 
-  /* ---------- Step 6: Branche + Website + Ziel ---------- */
+  /* ---------- Step 6: Kontext + SUBMIT (letzter Step) ---------- */
   if (key === 'kontext') {
     return (
       <Step
         title="Wer bist du?"
-        subtitle="Damit wir das Konzept auf deine Branche und Zielgruppe zuschneiden."
-        canNext={!!answers.branche}
-        onNext={onNext}
+        subtitle="Damit wir das Konzept auf deine Branche zuschneiden. Wir analysieren bereits deine E-Mail-Domain automatisch – die Website unten ist optional."
+        canNext={!!answers.branche && !submitting}
+        nextLabel={submitting ? 'Wird erstellt …' : 'Konzept erstellen'}
+        onNext={onSubmit}
         onBack={onBack}
       >
         <div className="wgk__grid wgk__grid--2">
@@ -268,7 +290,7 @@ export default function Quiz(props) {
         </div>
 
         <label className="wgk__field">
-          <span>Deine Website (für eine passgenauere Analyse – optional)</span>
+          <span>Deine Website (optional – für ein noch passgenaueres Konzept)</span>
           <input
             type="text"
             inputMode="url"
@@ -280,55 +302,20 @@ export default function Quiz(props) {
             onChange={(e) => set('website', e.target.value)}
           />
         </label>
+
         <label className="wgk__field">
           <span>Wofür konkret soll das Video Wirkung erzeugen? (optional)</span>
           <textarea
             rows={3}
-            placeholder="z. B. mehr Bewerbungen für die Pflegekräfte-Stellen, oder einen ersten Eindruck für Neukunden"
+            placeholder="z. B. mehr Bewerbungen für die Pflegekräfte-Stellen, oder ein erster Eindruck für Neukunden"
             value={answers.ziel}
             onChange={(e) => set('ziel', e.target.value)}
           />
         </label>
-      </Step>
-    );
-  }
 
-  /* ---------- Step 7: Lead (Email schon aus Intro, hier nur Name) ---------- */
-  if (key === 'lead') {
-    const valid = lead.name.trim().split(/\s+/).length >= 2 && /\S+@\S+\.\S+/.test(lead.email);
-    return (
-      <Step
-        title="Fast geschafft – wer bekommt das PDF?"
-        subtitle={`Wir schicken dein Konzept an ${lead.email}. Sag uns noch deinen vollen Namen für die persönliche Ansprache.`}
-        canNext={valid && !submitting}
-        nextLabel={submitting ? 'Wird erstellt …' : 'Konzept erstellen'}
-        onNext={onSubmit}
-        onBack={onBack}
-      >
-        <label className="wgk__field">
-          <span>Vor- und Nachname</span>
-          <input
-            type="text"
-            value={lead.name}
-            onChange={(e) => setLead({ ...lead, name: e.target.value })}
-            placeholder="Anna Müller"
-            autoComplete="name"
-            autoFocus
-            required
-          />
-        </label>
-        <label className="wgk__field">
-          <span>E-Mail (aus dem Start)</span>
-          <input
-            type="email"
-            value={lead.email}
-            onChange={(e) => setLead({ ...lead, email: e.target.value })}
-            placeholder="anna@firma.de"
-            autoComplete="email"
-            required
-          />
-        </label>
-        <p className="wgk__note">Alle Preise verstehen sich netto, zzgl. MwSt.</p>
+        <p className="wgk__note">
+          Wir mailen das fertige Konzept an <strong>{lead.email}</strong>. Alle Preise netto, zzgl. MwSt.
+        </p>
         {error && <p className="wgk__error">{error}</p>}
       </Step>
     );
@@ -380,5 +367,44 @@ function IconCard({ icon, label, hint, badge, active, wide, onClick }) {
         {hint && <span className="wgk__iconcard-hint">{hint}</span>}
       </span>
     </button>
+  );
+}
+
+function FeatureItem({ feature, checked, onToggle }) {
+  const [showInfo, setShowInfo] = useState(false);
+
+  return (
+    <div className={`wgk__checkitem-wrap ${showInfo ? 'has-info' : ''}`}>
+      <button
+        type="button"
+        className={`wgk__checkitem ${checked ? 'is-checked' : ''}`}
+        onClick={onToggle}
+      >
+        <span className="wgk__checkitem-icon">{feature.icon}</span>
+        <span className="wgk__checkitem-label">{feature.label}</span>
+        <span
+          className="wgk__checkitem-info"
+          role="button"
+          tabIndex={0}
+          aria-label="Was bedeutet das?"
+          onClick={(e) => { e.stopPropagation(); setShowInfo((v) => !v); }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.stopPropagation();
+              e.preventDefault();
+              setShowInfo((v) => !v);
+            }
+          }}
+        >
+          i
+        </span>
+        <span className="wgk__checkitem-box">{checked ? '✓' : ''}</span>
+      </button>
+      {showInfo && (
+        <div className="wgk__checkitem-tooltip" role="note">
+          {feature.tooltip}
+        </div>
+      )}
+    </div>
   );
 }
