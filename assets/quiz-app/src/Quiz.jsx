@@ -1,72 +1,71 @@
-import React, { useState } from 'react';
-import { isFeatureAvailable } from './pricing.js';
+import React, { useState, useEffect } from 'react';
+import { isFeatureAvailable, lengthsForType } from './pricing.js';
 
 /* ============================================================
    Quiz aus Kundensicht.
-   - 8 Video-Typen in 2 Sektionen
-   - Quiz-Flow verzweigt je nach Typ (siehe stepsForType)
-   - Feature-Liste filtert sich je nach Typ
-   - Kontext-Step ist der Submit-Step (Name/Email wurden im Intro erfasst)
+   - Wording einfach gehalten, keine Fachbegriffe
+   - Längen + Features werden je nach Video-Typ gefiltert
+   - Kontext-Step ist Submit-Step (kein separater Lead-Step)
    - Tooltips für Features
    ============================================================ */
 
 const VIDEO_TYPEN_CLASSIC = [
-  { id: 'imagefilm',  label: 'Imagefilm',         hint: 'Marke greifbar machen',            icon: '🎬' },
-  { id: 'werbespot',  label: 'Werbespot',         hint: 'Verkauf, Hero-Video, Pre-Roll',    icon: '📣' },
-  { id: 'recruiting', label: 'Recruiting-Video',  hint: 'Bewerber:innen gewinnen',          icon: '🤝' },
-  { id: 'reel_paket', label: 'Reel-Paket',        hint: '12 Reels in einem ½ Drehtag',      icon: '📱', badge: 'Abo 3 × 500 €' },
+  { id: 'imagefilm',  label: 'Imagefilm',         hint: 'Marke greifbar machen', icon: '🎬' },
+  { id: 'werbespot',  label: 'Werbespot',         hint: 'Verkaufen, Aufmerksamkeit gewinnen', icon: '📣' },
+  { id: 'recruiting', label: 'Recruiting-Video',  hint: 'Bewerber:innen gewinnen', icon: '🤝' },
+  { id: 'reel_paket', label: 'Reel-Paket',        hint: '12 Kurzvideos für Social Media', icon: '📱', badge: 'Abo 3 × 500 €' },
 ];
 
 const VIDEO_TYPEN_ANIMATION = [
-  { id: 'erklaer_real',   label: 'Erklärvideo (Real)',   hint: 'Mit echtem Material gedreht', icon: '💡' },
-  { id: 'erklaer_anim',   label: 'Erklärvideo (2D)',     hint: 'Animiertes Erklärvideo',      icon: '✏️' },
-  { id: 'animation_3d',   label: '3D-Animation',         hint: 'Volumen, Materialien, Licht', icon: '🧊' },
-  { id: 'animation_tech', label: 'Technische Animation', hint: 'Maschinen, Bauteile, Prozess', icon: '⚙️' },
+  { id: 'erklaer_real',   label: 'Erklärvideo (real gedreht)', hint: 'Erklärung mit echten Menschen und Material', icon: '💡' },
+  { id: 'erklaer_anim',   label: 'Erklärvideo (Animation)',    hint: 'Komplett animiert (2D-Stil)', icon: '✏️' },
+  { id: 'animation_3d',   label: '3D-Animation',               hint: 'Volumen, Materialien, Licht – wie ein 3D-Film', icon: '🧊' },
+  { id: 'animation_tech', label: 'Technische Animation',       hint: 'Maschinen, Bauteile, Prozesse erklären', icon: '⚙️' },
 ];
 
 const OUTPUT_PAKETE = [
-  { id: 'einzel',   label: 'Ein fertiges Hauptvideo',    hint: 'Z. B. ein Image-Spot für deine Website oder einen Kanal.',                       icon: '🎯' },
-  { id: 'paket',    label: 'Hauptvideo + Social-Cuts',   hint: '1 Hauptvideo + 2–3 kurze Versionen (Reels/Shorts) für Social.', icon: '📦', badge: 'Empfohlen' },
-  { id: 'kampagne', label: 'Vollkampagne',               hint: 'Hauptvideo + Social-Cuts + Behind-the-Scenes + Story-Snippets.', icon: '🚀' },
+  { id: 'einzel',   label: 'Ein Hauptvideo',                              hint: 'Z. B. ein Image-Spot für deine Website oder einen Kanal.', icon: '🎯' },
+  { id: 'paket',    label: 'Hauptvideo + Kurzvideos für Social Media',    hint: '1 Hauptvideo + 2–3 kürzere Versionen für Reels/Shorts/TikTok.', icon: '📦', badge: 'Empfohlen' },
+  { id: 'kampagne', label: 'Komplette Kampagne',                          hint: 'Hauptvideo + Kurzvideos + Bonus-Material (Behind-the-Scenes, Story-Snippets).', icon: '🚀' },
 ];
 
-const VIDEO_LAENGEN = [
-  { id: 'short',      label: '15–30 Sek.', hint: 'Reel, Short, TikTok – ein Punch.',            icon: '⚡' },
-  { id: 'medium',     label: '60–90 Sek.', hint: 'Klassischer Spot, Pre-Roll, Hero-Video.',     icon: '🎞️' },
-  { id: 'long',       label: '2–3 Min.',   hint: 'Imagefilm mit Story und mehreren Szenen.',    icon: '📺' },
-  { id: 'extra_long', label: '4–5 Min.',   hint: 'Erklärfilm, Mitarbeiter-Portrait, Bewegt-FAQ.', icon: '🎥' },
-];
+const ALL_LAENGEN = {
+  short:      { id: 'short',      label: '15–30 Sek.', hint: 'Kurzvideo für Reels, Shorts, TikTok – ein Punch.', icon: '⚡' },
+  medium:     { id: 'medium',     label: '60–90 Sek.', hint: 'Klassischer Spot für Web oder Social.',           icon: '🎞️' },
+  long:       { id: 'long',       label: '2–3 Min.',   hint: 'Längeres Video mit Story und mehreren Szenen.',  icon: '📺' },
+  extra_long: { id: 'extra_long', label: '4–5 Min.',   hint: 'Erklärfilm, Mitarbeiter-Portrait, Bewegt-FAQ.',   icon: '🎥' },
+};
 
 const FEATURES = [
   {
     id: 'voiceover',
     label: 'Voiceover / Sprecher:in',
     icon: '🎙️',
-    tooltip: 'Professionelle Stimme spricht den Text ein – m/w, jung/reif, freundlich/seriös. Wir wählen passend zu deiner Marke.',
+    tooltip: 'Professionelle Stimme spricht den Text ein – m/w, jung/reif, freundlich/seriös. Wir wählen passend zu deiner Marke aus.',
   },
   {
     id: 'animation',
-    label: 'Bewegte Text-Einblendungen',
+    label: 'Text-Einblendungen (Namen, Zitate)',
     icon: '✨',
-    tooltip: 'Animierte Texte und Namens-Einblendungen (Lower-Thirds): „Frau Müller, Pflegedienstleitung". Hebt Aussagen hervor und macht das Video lebendiger.',
+    tooltip: 'Eingeblendete Textgrafiken: z. B. „Frau Müller, Pflegedienstleitung" oder hervorgehobene Zitate. Macht Aussagen sichtbar und das Video hochwertiger. Untertitel sind bei uns immer Standard.',
   },
   {
     id: 'drohne',
     label: 'Drohnen-Aufnahmen',
     icon: '🚁',
-    tooltip: 'Luftaufnahmen für Cinematic-Look. Ideal für Außen-Locations, Gebäude, Werksgelände oder Landschaft. Wir kommen mit eigener Drohne + Pilotenlizenz.',
+    tooltip: 'Luftaufnahmen für einen kinoreifen Look. Ideal für Außen-Locations, Gebäude, Werksgelände oder Landschaft. Wir kommen mit eigener Drohne + Pilotenlizenz.',
   },
   {
     id: 'sound',
-    label: 'Sound Design (Atmo & SFX)',
+    label: 'Sound Design (Atmosphäre, Effekte)',
     icon: '🔊',
-    tooltip: 'Atmosphäre, gezielte Soundeffekte und Akzente – das was den Unterschied zwischen „Video" und „Kino" macht. Lizenzierte Musik ist bei uns immer schon Standard.',
+    tooltip: 'Atmosphäre, gezielte Soundeffekte und Akzente – das, was den Unterschied zwischen „Video" und „Kino" macht. Lizenzierte Hintergrundmusik ist bei uns sowieso immer dabei.',
   },
   {
     id: 'mehrsprachig',
-    label: 'Mehrsprachige Versionen',
+    label: 'Zweite Sprachfassung',
     icon: '🌐',
-    tooltip: 'Zusätzliche Sprachversion (z. B. Englisch). Inkl. Übersetzung und passendem Voiceover.',
+    tooltip: 'Wir produzieren das Video zusätzlich in einer zweiten Sprache (z. B. Englisch). Inkl. Übersetzung und passendem Voiceover.',
   },
 ];
 
@@ -93,7 +92,19 @@ export default function Quiz(props) {
   } = props;
 
   const key = steps[step];
-  const isLastStep = step === steps.length - 1;
+
+  // Wenn der Nutzer den Video-Typ ändert und die aktuell gewählte Länge
+  // für diesen Typ nicht erlaubt ist → auf den ersten verfügbaren Wert resetten.
+  useEffect(() => {
+    if (!answers.video_typ) return;
+    const allowed = lengthsForType(answers.video_typ);
+    if (allowed.length === 0) return;
+    if (!allowed.includes(answers.video_laenge)) {
+      // medium ist meistens drin, sonst der erste verfügbare
+      const fallback = allowed.includes('medium') ? 'medium' : allowed[0];
+      setAnswers((a) => ({ ...a, video_laenge: fallback }));
+    }
+  }, [answers.video_typ]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function set(field, value) {
     setAnswers((a) => ({ ...a, [field]: value }));
@@ -109,7 +120,7 @@ export default function Quiz(props) {
     });
   }
 
-  /* ---------- Step 1: Video-Typ (2 Sektionen) ---------- */
+  /* ---------- Step 1: Video-Typ ---------- */
   if (key === 'video_typ') {
     return (
       <Step
@@ -150,12 +161,12 @@ export default function Quiz(props) {
     );
   }
 
-  /* ---------- Step 2: Output-Paket (nur bei klassischen Videos) ---------- */
+  /* ---------- Step 2: Output-Paket ---------- */
   if (key === 'output_paket') {
     return (
       <Step
         title="Was möchtest du am Ende in der Hand haben?"
-        subtitle="Du musst nichts über Drehtage wissen. Wähle einfach das Liefer-Paket, das zu deinem Vorhaben passt."
+        subtitle="Wähle einfach das Liefer-Paket, das zu deinem Vorhaben passt – um Drehtage und Schnitt-Stunden kümmern wir uns."
         canNext={!!answers.output_paket}
         onNext={onNext}
         onBack={onBack}
@@ -178,21 +189,24 @@ export default function Quiz(props) {
     );
   }
 
-  /* ---------- Step 3: Video-Länge ---------- */
+  /* ---------- Step 3: Video-Länge (gefiltert pro Typ) ---------- */
   if (key === 'video_laenge') {
+    const allowed = lengthsForType(answers.video_typ);
     const isPerMinute = ['erklaer_real', 'erklaer_anim', 'animation_3d', 'animation_tech'].includes(answers.video_typ);
+    const lengths = allowed.map((id) => ALL_LAENGEN[id]).filter(Boolean);
+
     return (
       <Step
         title="Wie lang soll dein Video sein?"
         subtitle={isPerMinute
           ? 'Bei Animation und Erklärvideos ist die Länge der Haupt-Preistreiber – jede Minute mehr braucht mehr Aufwand.'
           : 'Längere Videos brauchen mehr Story-Bögen und mehr Schnitt.'}
-        canNext={!!answers.video_laenge}
+        canNext={!!answers.video_laenge && allowed.includes(answers.video_laenge)}
         onNext={onNext}
         onBack={onBack}
       >
         <div className="wgk__grid wgk__grid--2">
-          {VIDEO_LAENGEN.map((l) => (
+          {lengths.map((l) => (
             <IconCard
               key={l.id}
               icon={l.icon}
@@ -207,22 +221,22 @@ export default function Quiz(props) {
     );
   }
 
-  /* ---------- Step 4: Features (mit Tooltips) ---------- */
+  /* ---------- Step 4: Features (gefiltert pro Typ) ---------- */
   if (key === 'features') {
     const sel = Array.isArray(answers.features) ? answers.features : [];
     const availableFeatures = FEATURES.filter((f) => isFeatureAvailable(answers.video_typ, f.id));
 
     return (
       <Step
-        title="Welche Features soll dein Video haben?"
-        subtitle="Mehrfach-Auswahl möglich. Untertitel und lizenzierte Musik sind bei uns immer Standard. Tippe auf das (i) für eine Erklärung."
+        title="Welche Extras soll dein Video haben?"
+        subtitle="Mehrfach-Auswahl möglich. Untertitel und Hintergrundmusik sind bei uns immer Standard. Tippe auf das (i) für eine Erklärung."
         canNext={true}
         nextLabel="Weiter"
         onNext={onNext}
         onBack={onBack}
       >
         {availableFeatures.length === 0 ? (
-          <p className="wgk__note">Für diese Auswahl sind alle Standard-Features bereits inklusive.</p>
+          <p className="wgk__note">Für diese Auswahl sind alle relevanten Extras bereits inklusive.</p>
         ) : (
           <div className="wgk__checklist">
             {availableFeatures.map((f) => (
@@ -265,7 +279,7 @@ export default function Quiz(props) {
     );
   }
 
-  /* ---------- Step 6: Kontext + SUBMIT (letzter Step) ---------- */
+  /* ---------- Step 6: Kontext + SUBMIT ---------- */
   if (key === 'kontext') {
     return (
       <Step
@@ -304,7 +318,7 @@ export default function Quiz(props) {
         </label>
 
         <label className="wgk__field">
-          <span>Wofür konkret soll das Video Wirkung erzeugen? (optional)</span>
+          <span>Wofür soll das Video Wirkung erzeugen? (optional)</span>
           <textarea
             rows={3}
             placeholder="z. B. mehr Bewerbungen für die Pflegekräfte-Stellen, oder ein erster Eindruck für Neukunden"

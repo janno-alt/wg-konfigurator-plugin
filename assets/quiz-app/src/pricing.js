@@ -3,9 +3,13 @@
    Synchron mit includes/Services/PriceCalculator.php halten!
 
    Pricing-Modelle:
-   - 'flat':       Pauschale × Output-Paket × Länge (für Image/Werbe/Recruiting)
-   - 'per_minute': Basis × Mittelwert-Minuten (für Erklär/Animation)
+   - 'flat':       Pauschale + Output-Paket-Pauschale + Längen-Multi
+   - 'per_minute': Basis × Mittelwert-Minuten
    - 'fixed':      Festpreis (für Reel-Paket)
+
+   Pro Typ definieren wir zusätzlich:
+   - has_*       Welche Features sind erlaubt
+   - lengths[]   Welche Längen sind erlaubt (leer = alle)
    ============================================================ */
 
 const KONZEPT_PAUSCHALE = 1000;
@@ -18,6 +22,7 @@ const VIDEO_TYPES = {
     base_min: 2000, base_max: 3000,
     has_konzept: true, has_drohne: true, has_voiceover: true, has_animation: true, has_sound: true, has_mehrsprachig: true,
     has_paket: true,   has_laenge: true,
+    lengths: ['medium', 'long', 'extra_long'],
   },
   werbespot: {
     label: 'Werbespot',
@@ -25,38 +30,50 @@ const VIDEO_TYPES = {
     base_min: 2500, base_max: 3750,
     has_konzept: true, has_drohne: true, has_voiceover: true, has_animation: true, has_sound: true, has_mehrsprachig: true,
     has_paket: true,   has_laenge: true,
+    lengths: ['short', 'medium', 'long'],
   },
   recruiting: {
     label: 'Recruiting-Video',
     model: 'flat',
     base_min: 2500, base_max: 3750,
-    has_konzept: true, has_drohne: true, has_voiceover: true, has_animation: true, has_sound: true, has_mehrsprachig: true,
+    has_konzept: true, has_drohne: true, has_voiceover: true,
+    has_animation: false,   // Captions sind Standard bei Recruiting (Social)
+    has_sound: true, has_mehrsprachig: true,
     has_paket: true,   has_laenge: true,
+    lengths: ['medium', 'long'],   // 15-30s zu kurz, 4-5 min zu lang
   },
   reel_paket: {
-    label: 'Reel-Paket (12 Reels)',
+    label: 'Reel-Paket (12 Kurzvideos)',
     model: 'fixed',
     base_min: 1500, base_max: 1500,
-    has_konzept: false, has_drohne: true, has_voiceover: false, has_animation: true, has_sound: false, has_mehrsprachig: false,
-    has_paket: false,   has_laenge: false,
+    has_konzept: false,
+    has_drohne: true,
+    has_voiceover: false,
+    has_animation: false,    // Captions Standard
+    has_sound: false,
+    has_mehrsprachig: false,
+    has_paket: false, has_laenge: false,
+    lengths: [],
     drehtage: 0.5,
     payment_note: '3 × 500 € monatlich',
   },
 
-  // ---------- Erklärvideo & Animation (pro Minute, max ~50% Spread) ----------
+  // ---------- Erklärvideo & Animation ----------
   erklaer_real: {
-    label: 'Erklärvideo (Real-Material)',
+    label: 'Erklärvideo (mit Real-Material)',
     model: 'per_minute',
     base_min: 1000, base_max: 1500,
     has_konzept: true, has_drohne: true, has_voiceover: true, has_animation: true, has_sound: true, has_mehrsprachig: true,
     has_paket: false,  has_laenge: true,
+    lengths: ['medium', 'long', 'extra_long'],
   },
   erklaer_anim: {
-    label: 'Erklärvideo (Animiert / 2D)',
+    label: 'Erklärvideo (Animation)',
     model: 'per_minute',
     base_min: 1500, base_max: 2250,
     has_konzept: true, has_drohne: false, has_voiceover: true, has_animation: false, has_sound: true, has_mehrsprachig: true,
     has_paket: false,  has_laenge: true,
+    lengths: ['short', 'medium', 'long', 'extra_long'],
   },
   animation_3d: {
     label: '3D-Animation',
@@ -64,6 +81,7 @@ const VIDEO_TYPES = {
     base_min: 2000, base_max: 3000,
     has_konzept: true, has_drohne: false, has_voiceover: true, has_animation: false, has_sound: true, has_mehrsprachig: true,
     has_paket: false,  has_laenge: true,
+    lengths: ['short', 'medium', 'long'],
   },
   animation_tech: {
     label: 'Technische Animation',
@@ -71,17 +89,17 @@ const VIDEO_TYPES = {
     base_min: 2500, base_max: 3750,
     has_konzept: true, has_drohne: false, has_voiceover: true, has_animation: false, has_sound: true, has_mehrsprachig: true,
     has_paket: false,  has_laenge: true,
+    lengths: ['medium', 'long', 'extra_long'],
   },
 };
 
-// Drehtage-Mapping aus Output-Paket
+/* Output-Paket: Pauschale statt Multiplikator (hält Spread konstant) */
 const PAKET = {
-  einzel:   { mult_min: 1.0,  mult_max: 1.0,  drehtage: 1, label: 'Ein Hauptvideo' },
-  paket:    { mult_min: 1.30, mult_max: 1.35, drehtage: 2, label: 'Hauptvideo + Social-Cuts' },
-  kampagne: { mult_min: 1.50, mult_max: 1.65, drehtage: 3, label: 'Vollkampagne' },
+  einzel:   { add_flat: 0,    drehtage: 1, label: 'Ein Hauptvideo' },
+  paket:    { add_flat: 750,  drehtage: 2, label: 'Hauptvideo + Kurzvideos für Social Media' },
+  kampagne: { add_flat: 1500, drehtage: 3, label: 'Komplette Kampagne (Hauptvideo + Kurzvideos + Bonus-Material)' },
 };
 
-// Längen-Multiplikator (flat) und Mittelwert-Minuten (per_minute)
 const LAENGE = {
   short:      { mult: 0.9,  minutes: 0.4,  label: '15–30 Sek.' },
   medium:     { mult: 1.0,  minutes: 1.25, label: '60–90 Sek.' },
@@ -91,10 +109,10 @@ const LAENGE = {
 
 const FEATURES = {
   voiceover:    { price: 400, label: 'Voiceover / Sprecher:in' },
-  animation:    { price: 450, label: 'Animierte Texte / Lower-Thirds' },
-  drohne:       { price_per_day: 200, label: 'Drohnen-Aufnahmen' }, // × Drehtage
-  sound:        { price_per_min: 250, label: 'Sound Design (Atmo, SFX)' }, // × Minuten
-  mehrsprachig: { price: 390, label: 'Mehrsprachige Versionen' },
+  animation:    { price: 250, label: 'Text-Einblendungen (Namen, Zitate)' },
+  drohne:       { price_per_day: 200, label: 'Drohnen-Aufnahmen' },
+  sound:        { price_per_min: 250, label: 'Sound Design (Atmosphäre, Effekte)' },
+  mehrsprachig: { price: 390, label: 'Zweite Sprachfassung' },
 };
 
 const EXPRESS_MULT = 0.20;
@@ -120,17 +138,11 @@ export function computeBreakdown(q) {
       min: type.base_min,
       max: type.base_max,
     });
-
     addOptionalFeatures(items, q, type);
     const total = sumItems(items);
-
     return {
-      items,
-      total_min: total.min,
-      total_max: total.max,
-      ready: true,
-      type_label: type.label,
-      payment_note: type.payment_note,
+      items, total_min: total.min, total_max: total.max, ready: true,
+      type_label: type.label, payment_note: type.payment_note,
     };
   }
 
@@ -150,18 +162,18 @@ export function computeBreakdown(q) {
       max: type.base_max,
     });
 
-    if (paket.mult_min !== 1.0 || paket.mult_max !== 1.0) {
+    if (paket.add_flat > 0) {
       items.push({
         key: 'paket',
         label: `+ ${paket.label}`,
-        min: Math.round(type.base_min * (paket.mult_min - 1)),
-        max: Math.round(type.base_max * (paket.mult_max - 1)),
+        min: paket.add_flat,
+        max: paket.add_flat,
       });
     }
 
     if (length.mult !== 1.0) {
-      const sumMin0 = type.base_min * paket.mult_min;
-      const sumMax0 = type.base_max * paket.mult_max;
+      const sumMin0 = type.base_min;
+      const sumMax0 = type.base_max;
       const sign = length.mult > 1.0 ? '+' : '−';
       items.push({
         key: 'length',
@@ -176,13 +188,7 @@ export function computeBreakdown(q) {
     addExpress(items, q);
 
     const total = sumItems(items);
-    return {
-      items,
-      total_min: total.min,
-      total_max: total.max,
-      ready: true,
-      type_label: type.label,
-    };
+    return { items, total_min: total.min, total_max: total.max, ready: true, type_label: type.label };
   }
 
   // ---------- Modell: PER_MINUTE (Erklär / Animation) ----------
@@ -198,17 +204,11 @@ export function computeBreakdown(q) {
     });
 
     addKonzept(items, type);
-    addOptionalFeatures(items, q, type, 1, minutes); // Animationen: 1 "Drehtag"-Äquivalent für Konsistenz
+    addOptionalFeatures(items, q, type, 1, minutes);
     addExpress(items, q);
 
     const total = sumItems(items);
-    return {
-      items,
-      total_min: total.min,
-      total_max: total.max,
-      ready: true,
-      type_label: type.label,
-    };
+    return { items, total_min: total.min, total_max: total.max, ready: true, type_label: type.label };
   }
 
   return { items: [], total_min: 0, total_max: 0, ready: false };
@@ -218,7 +218,7 @@ function addKonzept(items, type) {
   if (!type.has_konzept) return;
   items.push({
     key: 'konzept',
-    label: '+ Konzept-Workshop (Storyboard, Drehplan)',
+    label: '+ Konzept-Workshop (Drehbuch, Drehplan)',
     min: KONZEPT_PAUSCHALE,
     max: KONZEPT_PAUSCHALE,
   });
@@ -228,8 +228,6 @@ function addOptionalFeatures(items, q, type, drehtage = 1, minutes = 0) {
   const features = q.features || [];
   features.forEach((f) => {
     if (!FEATURES[f]) return;
-
-    // Validierung: nur Features die der Typ unterstützt
     if (f === 'voiceover'    && !type.has_voiceover)    return;
     if (f === 'animation'    && !type.has_animation)    return;
     if (f === 'drohne'       && !type.has_drohne)       return;
@@ -286,7 +284,6 @@ function sumItems(items) {
   );
 }
 
-/** Public: Feature ist für diesen Video-Typ verfügbar? */
 export function isFeatureAvailable(videoType, featureId) {
   const type = VIDEO_TYPES[videoType];
   if (!type) return false;
@@ -299,16 +296,22 @@ export function isFeatureAvailable(videoType, featureId) {
   }[featureId] || false;
 }
 
-/** Public: Quiz-Steps die für diesen Video-Typ relevant sind.
- *  Lead (Name+Email) ist NICHT mehr im Quiz — wird im Intro abgefragt.
- *  Kontext ist der Submit-Step. */
+/** Welche Längen sind für diesen Typ erlaubt? */
+export function lengthsForType(videoType) {
+  const type = VIDEO_TYPES[videoType];
+  if (!type) return ['short', 'medium', 'long', 'extra_long'];
+  if (!type.lengths || type.lengths.length === 0) return [];
+  return type.lengths;
+}
+
+/** Quiz-Steps die für diesen Video-Typ relevant sind */
 export function stepsForType(videoType) {
   const type = VIDEO_TYPES[videoType];
   if (!type) return ['video_typ'];
 
   const steps = ['video_typ'];
   if (type.has_paket)   steps.push('output_paket');
-  if (type.has_laenge)  steps.push('video_laenge');
+  if (type.has_laenge && type.lengths.length > 0) steps.push('video_laenge');
   steps.push('features', 'zeitrahmen', 'kontext');
   return steps;
 }
@@ -322,5 +325,4 @@ export function fmtRange(min, max) {
   return `${new Intl.NumberFormat('de-DE').format(min)} – ${fmtEur(max)}`;
 }
 
-// Export für Debug / Tests
 export { VIDEO_TYPES, PAKET, LAENGE, FEATURES };

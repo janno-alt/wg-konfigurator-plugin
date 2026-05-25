@@ -48,6 +48,14 @@ export default function App({ theme = 'dark' }) {
     }
   }, [steps.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Wenn der gewählte Video-Typ kein output_paket-Step hat, leeren wir das Feld
+  // damit die Sidebar nicht mit einem hängengebliebenen Paket rechnet.
+  React.useEffect(() => {
+    if (!steps.includes('output_paket') && answers.output_paket !== '') {
+      setAnswers((a) => ({ ...a, output_paket: '' }));
+    }
+  }, [steps.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
   /* ---------- Intro → Quiz ---------- */
   async function handleStart() {
     setStarting(true);

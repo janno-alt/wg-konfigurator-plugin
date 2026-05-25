@@ -134,19 +134,23 @@
 }
 
 /* ============================================================
-   LOADING / Generierungs-Screen
+   LOADING / Generierungs-Screen (flex-zentriert, robust)
    ============================================================ */
 .wgk__loading {
   max-width: 600px;
-  text-align: center;
   padding: 48px 32px;
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
 .wgk__loading-spinner {
   position: relative;
   width: 84px;
   height: 84px;
-  margin: 0 auto 28px;
+  margin: 0 0 28px;
+  flex: 0 0 auto;
 }
 .wgk__loading-ring {
   position: absolute;
@@ -196,8 +200,8 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  max-width: 360px;
-  margin: 0 auto;
+  width: 100%;
+  max-width: 380px;
 }
 .wgk__loading-item {
   display: flex;

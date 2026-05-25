@@ -7,37 +7,92 @@ use WG\Konfigurator\Admin\Settings;
 
 /**
  * Server-seitige Preis-Logik. MUSS synchron mit assets/quiz-app/src/pricing.js
- * gehalten werden – derselbe Algorithmus, dieselben Preise.
+ * gehalten werden.
  *
- * Modelle:
- * - 'flat':       Pauschale × Output-Paket × Länge   (Image/Werbe/Recruiting)
- * - 'per_minute': Basis × Mittelwert-Minuten         (Erklär/Animation)
- * - 'fixed':      Festpreis                          (Reel-Paket)
+ * - Längen pro Typ gefiltert (`lengths`)
+ * - Features pro Typ gefiltert (`has_*`)
+ * - Output-Paket als Pauschale (statt Multiplikator), für engeren Spread
  */
 final class PriceCalculator {
 
     private const KONZEPT_PAUSCHALE = 1000;
 
-    /** @var array<string,array<string,mixed>>
-     *
-     * Preis-Range pro Typ ist auf max ~50 % Spread eingestellt, generell etwas
-     * zurückhaltend kalkuliert (lieber niedriger als abschreckend hoch).
-     */
+    /** @var array<string,array<string,mixed>> */
     private const VIDEO_TYPES = [
-        'imagefilm'       => [ 'label' => 'Imagefilm',               'model' => 'flat',       'base_min' => 2000, 'base_max' => 3000, 'has_konzept' => true,  'has_drohne' => true,  'has_voiceover' => true,  'has_animation' => true,  'has_sound' => true,  'has_mehrsprachig' => true,  'has_paket' => true,  'has_laenge' => true  ],
-        'werbespot'       => [ 'label' => 'Werbespot',               'model' => 'flat',       'base_min' => 2500, 'base_max' => 3750, 'has_konzept' => true,  'has_drohne' => true,  'has_voiceover' => true,  'has_animation' => true,  'has_sound' => true,  'has_mehrsprachig' => true,  'has_paket' => true,  'has_laenge' => true  ],
-        'recruiting'      => [ 'label' => 'Recruiting-Video',        'model' => 'flat',       'base_min' => 2500, 'base_max' => 3750, 'has_konzept' => true,  'has_drohne' => true,  'has_voiceover' => true,  'has_animation' => true,  'has_sound' => true,  'has_mehrsprachig' => true,  'has_paket' => true,  'has_laenge' => true  ],
-        'reel_paket'      => [ 'label' => 'Reel-Paket (12 Reels)',   'model' => 'fixed',      'base_min' => 1500, 'base_max' => 1500, 'has_konzept' => false, 'has_drohne' => true,  'has_voiceover' => false, 'has_animation' => true,  'has_sound' => false, 'has_mehrsprachig' => false, 'has_paket' => false, 'has_laenge' => false, 'drehtage' => 0.5, 'payment_note' => '3 × 500 € monatlich' ],
-        'erklaer_real'    => [ 'label' => 'Erklärvideo (Real)',      'model' => 'per_minute', 'base_min' => 1000, 'base_max' => 1500, 'has_konzept' => true,  'has_drohne' => true,  'has_voiceover' => true,  'has_animation' => true,  'has_sound' => true,  'has_mehrsprachig' => true,  'has_paket' => false, 'has_laenge' => true  ],
-        'erklaer_anim'    => [ 'label' => 'Erklärvideo (2D)',        'model' => 'per_minute', 'base_min' => 1500, 'base_max' => 2250, 'has_konzept' => true,  'has_drohne' => false, 'has_voiceover' => true,  'has_animation' => false, 'has_sound' => true,  'has_mehrsprachig' => true,  'has_paket' => false, 'has_laenge' => true  ],
-        'animation_3d'    => [ 'label' => '3D-Animation',            'model' => 'per_minute', 'base_min' => 2000, 'base_max' => 3000, 'has_konzept' => true,  'has_drohne' => false, 'has_voiceover' => true,  'has_animation' => false, 'has_sound' => true,  'has_mehrsprachig' => true,  'has_paket' => false, 'has_laenge' => true  ],
-        'animation_tech'  => [ 'label' => 'Technische Animation',    'model' => 'per_minute', 'base_min' => 2500, 'base_max' => 3750, 'has_konzept' => true,  'has_drohne' => false, 'has_voiceover' => true,  'has_animation' => false, 'has_sound' => true,  'has_mehrsprachig' => true,  'has_paket' => false, 'has_laenge' => true  ],
+        'imagefilm'       => [
+            'label' => 'Imagefilm', 'model' => 'flat',
+            'base_min' => 2000, 'base_max' => 3000,
+            'has_konzept' => true, 'has_drohne' => true, 'has_voiceover' => true,
+            'has_animation' => true, 'has_sound' => true, 'has_mehrsprachig' => true,
+            'has_paket' => true, 'has_laenge' => true,
+            'lengths' => [ 'medium', 'long', 'extra_long' ],
+        ],
+        'werbespot'       => [
+            'label' => 'Werbespot', 'model' => 'flat',
+            'base_min' => 2500, 'base_max' => 3750,
+            'has_konzept' => true, 'has_drohne' => true, 'has_voiceover' => true,
+            'has_animation' => true, 'has_sound' => true, 'has_mehrsprachig' => true,
+            'has_paket' => true, 'has_laenge' => true,
+            'lengths' => [ 'short', 'medium', 'long' ],
+        ],
+        'recruiting'      => [
+            'label' => 'Recruiting-Video', 'model' => 'flat',
+            'base_min' => 2500, 'base_max' => 3750,
+            'has_konzept' => true, 'has_drohne' => true, 'has_voiceover' => true,
+            'has_animation' => false,  // Captions sind Standard
+            'has_sound' => true, 'has_mehrsprachig' => true,
+            'has_paket' => true, 'has_laenge' => true,
+            'lengths' => [ 'medium', 'long' ],
+        ],
+        'reel_paket'      => [
+            'label' => 'Reel-Paket (12 Kurzvideos)', 'model' => 'fixed',
+            'base_min' => 1500, 'base_max' => 1500,
+            'has_konzept' => false, 'has_drohne' => true, 'has_voiceover' => false,
+            'has_animation' => false, 'has_sound' => false, 'has_mehrsprachig' => false,
+            'has_paket' => false, 'has_laenge' => false,
+            'lengths' => [],
+            'drehtage' => 0.5,
+            'payment_note' => '3 × 500 € monatlich',
+        ],
+        'erklaer_real'    => [
+            'label' => 'Erklärvideo (mit Real-Material)', 'model' => 'per_minute',
+            'base_min' => 1000, 'base_max' => 1500,
+            'has_konzept' => true, 'has_drohne' => true, 'has_voiceover' => true,
+            'has_animation' => true, 'has_sound' => true, 'has_mehrsprachig' => true,
+            'has_paket' => false, 'has_laenge' => true,
+            'lengths' => [ 'medium', 'long', 'extra_long' ],
+        ],
+        'erklaer_anim'    => [
+            'label' => 'Erklärvideo (Animation)', 'model' => 'per_minute',
+            'base_min' => 1500, 'base_max' => 2250,
+            'has_konzept' => true, 'has_drohne' => false, 'has_voiceover' => true,
+            'has_animation' => false, 'has_sound' => true, 'has_mehrsprachig' => true,
+            'has_paket' => false, 'has_laenge' => true,
+            'lengths' => [ 'short', 'medium', 'long', 'extra_long' ],
+        ],
+        'animation_3d'    => [
+            'label' => '3D-Animation', 'model' => 'per_minute',
+            'base_min' => 2000, 'base_max' => 3000,
+            'has_konzept' => true, 'has_drohne' => false, 'has_voiceover' => true,
+            'has_animation' => false, 'has_sound' => true, 'has_mehrsprachig' => true,
+            'has_paket' => false, 'has_laenge' => true,
+            'lengths' => [ 'short', 'medium', 'long' ],
+        ],
+        'animation_tech'  => [
+            'label' => 'Technische Animation', 'model' => 'per_minute',
+            'base_min' => 2500, 'base_max' => 3750,
+            'has_konzept' => true, 'has_drohne' => false, 'has_voiceover' => true,
+            'has_animation' => false, 'has_sound' => true, 'has_mehrsprachig' => true,
+            'has_paket' => false, 'has_laenge' => true,
+            'lengths' => [ 'medium', 'long', 'extra_long' ],
+        ],
     ];
 
+    /** Pauschalen statt Multiplikatoren – hält Spread konstant. */
     private const PAKET = [
-        'einzel'   => [ 'mult_min' => 1.0,  'mult_max' => 1.0,  'drehtage' => 1, 'label' => 'Ein Hauptvideo' ],
-        'paket'    => [ 'mult_min' => 1.30, 'mult_max' => 1.35, 'drehtage' => 2, 'label' => 'Hauptvideo + Social-Cuts' ],
-        'kampagne' => [ 'mult_min' => 1.50, 'mult_max' => 1.65, 'drehtage' => 3, 'label' => 'Vollkampagne' ],
+        'einzel'   => [ 'add_flat' => 0,    'drehtage' => 1, 'label' => 'Ein Hauptvideo' ],
+        'paket'    => [ 'add_flat' => 750,  'drehtage' => 2, 'label' => 'Hauptvideo + Kurzvideos für Social Media' ],
+        'kampagne' => [ 'add_flat' => 1500, 'drehtage' => 3, 'label' => 'Komplette Kampagne (Hauptvideo + Kurzvideos + Bonus-Material)' ],
     ];
 
     private const LAENGE = [
@@ -49,7 +104,7 @@ final class PriceCalculator {
 
     private const FEATURES = [
         'voiceover'    => [ 'price' => 400 ],
-        'animation'    => [ 'price' => 450 ],
+        'animation'    => [ 'price' => 250 ],   // war 450 – Recruiting fliegt raus, daher günstiger
         'drohne'       => [ 'price_per_day' => 200 ],
         'sound'        => [ 'price_per_min' => 250 ],
         'mehrsprachig' => [ 'price' => 390 ],
@@ -97,18 +152,18 @@ final class PriceCalculator {
                 'max'   => (int) $type_def['base_max'],
             ];
 
-            if ( $paket['mult_min'] !== 1.0 || $paket['mult_max'] !== 1.0 ) {
+            if ( $paket['add_flat'] > 0 ) {
                 $items[] = [
                     'key'   => 'paket',
                     'label' => '+ ' . $paket['label'],
-                    'min'   => (int) round( $type_def['base_min'] * ( $paket['mult_min'] - 1 ) ),
-                    'max'   => (int) round( $type_def['base_max'] * ( $paket['mult_max'] - 1 ) ),
+                    'min'   => (int) $paket['add_flat'],
+                    'max'   => (int) $paket['add_flat'],
                 ];
             }
 
             if ( $length['mult'] !== 1.0 ) {
-                $sum_min0 = $type_def['base_min'] * $paket['mult_min'];
-                $sum_max0 = $type_def['base_max'] * $paket['mult_max'];
+                $sum_min0 = $type_def['base_min'];
+                $sum_max0 = $type_def['base_max'];
                 $sign     = $length['mult'] > 1.0 ? '+' : '−';
                 $items[] = [
                     'key'   => 'length',
@@ -170,7 +225,7 @@ final class PriceCalculator {
         }
         $items[] = [
             'key'   => 'konzept',
-            'label' => '+ Konzept-Workshop (Storyboard, Drehplan)',
+            'label' => '+ Konzept-Workshop (Drehbuch, Drehplan)',
             'min'   => self::KONZEPT_PAUSCHALE,
             'max'   => self::KONZEPT_PAUSCHALE,
         ];
@@ -178,9 +233,7 @@ final class PriceCalculator {
 
     private function add_features( array &$items, array $features, array $type_def, $drehtage, float $minutes ): void {
         foreach ( $features as $f ) {
-            if ( ! isset( self::FEATURES[ $f ] ) ) {
-                continue;
-            }
+            if ( ! isset( self::FEATURES[ $f ] ) ) continue;
             if ( $f === 'voiceover'    && empty( $type_def['has_voiceover'] ) ) continue;
             if ( $f === 'animation'    && empty( $type_def['has_animation'] ) ) continue;
             if ( $f === 'drohne'       && empty( $type_def['has_drohne'] ) ) continue;
@@ -221,9 +274,7 @@ final class PriceCalculator {
     }
 
     private function add_express( array &$items, array $quiz ): void {
-        if ( ( $quiz['zeitrahmen'] ?? '' ) !== 'express' ) {
-            return;
-        }
+        if ( ( $quiz['zeitrahmen'] ?? '' ) !== 'express' ) return;
         $sub = $this->sum_items( $items );
         $items[] = [
             'key'   => 'express',
@@ -235,8 +286,7 @@ final class PriceCalculator {
 
     /** @return array{min:int,max:int} */
     private function sum_items( array $items ): array {
-        $min = 0;
-        $max = 0;
+        $min = 0; $max = 0;
         foreach ( $items as $it ) {
             $min += (int) $it['min'];
             $max += (int) $it['max'];
@@ -247,9 +297,7 @@ final class PriceCalculator {
     private function sum_feature_items( array $items ): int {
         $sum = 0;
         foreach ( $items as $it ) {
-            if ( strpos( (string) $it['key'], 'feat-' ) === 0 ) {
-                $sum += (int) $it['max'];
-            }
+            if ( strpos( (string) $it['key'], 'feat-' ) === 0 ) $sum += (int) $it['max'];
         }
         return $sum;
     }
@@ -293,48 +341,44 @@ final class PriceCalculator {
         $out = [];
         foreach ( $ids as $f ) {
             $f = strtolower( trim( (string) $f ) );
-            if ( isset( self::FEATURES[ $f ] ) ) {
-                $out[] = $f;
-            }
+            if ( isset( self::FEATURES[ $f ] ) ) $out[] = $f;
         }
         return array_values( array_unique( $out ) );
     }
 
-    /* ---------- Public Static Helpers (für Templates) ---------- */
+    /* ---------- Public Static Helpers ---------- */
 
     public static function feature_label( string $id ): string {
         return [
             'voiceover'    => 'Voiceover / Sprecher:in',
-            'animation'    => 'Animierte Texte / Lower-Thirds',
+            'animation'    => 'Text-Einblendungen (Namen, Zitate)',
             'drohne'       => 'Drohnen-Aufnahmen',
-            'sound'        => 'Sound Design (Atmo, SFX)',
-            'mehrsprachig' => 'Mehrsprachige Versionen',
+            'sound'        => 'Sound Design (Atmosphäre, Effekte)',
+            'mehrsprachig' => 'Zweite Sprachfassung',
         ][ $id ] ?? $id;
     }
 
     /** @param string[] $ids */
     public static function feature_labels( array $ids ): array {
         $out = [];
-        foreach ( $ids as $id ) {
-            $out[] = self::feature_label( $id );
-        }
+        foreach ( $ids as $id ) $out[] = self::feature_label( $id );
         return $out;
     }
 
     public static function paket_label( string $id ): string {
         return [
-            'einzel'   => 'Ein fertiges Hauptvideo',
-            'paket'    => 'Hauptvideo + Social-Cuts',
-            'kampagne' => 'Vollkampagne',
+            'einzel'   => 'Ein Hauptvideo',
+            'paket'    => 'Hauptvideo + Kurzvideos für Social Media',
+            'kampagne' => 'Komplette Kampagne (Hauptvideo + Kurzvideos + Bonus-Material)',
         ][ $id ] ?? $id;
     }
 
     public static function length_label( string $id ): string {
         return [
-            'short'      => '15–30 Sek. (Reel / Short)',
+            'short'      => '15–30 Sek. (Kurzvideo)',
             'medium'     => '60–90 Sek. (Spot)',
-            'long'       => '2–3 Min. (Imagefilm)',
-            'extra_long' => '4–5 Min. (Erklärfilm)',
+            'long'       => '2–3 Min.',
+            'extra_long' => '4–5 Min.',
         ][ $id ] ?? $id;
     }
 
@@ -342,7 +386,7 @@ final class PriceCalculator {
         return self::VIDEO_TYPES[ $id ]['label'] ?? $id;
     }
 
-    /** @return string[] valid video_typ IDs */
+    /** @return string[] */
     public static function type_ids(): array {
         return array_keys( self::VIDEO_TYPES );
     }
