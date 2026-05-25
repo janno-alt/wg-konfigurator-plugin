@@ -28,23 +28,36 @@ $fmt = static fn( $n ) => number_format( (int) $n, 0, ',', '.' ) . ' €';
     </table>
 
     <?php
-        $paket_lbl = \WG\Konfigurator\Services\PriceCalculator::paket_label(
-            (string) ( $quiz['output_paket'] ?? 'einzel' )
-        );
-        $feat_lbl = \WG\Konfigurator\Services\PriceCalculator::feature_labels(
-            (array) ( $quiz['features'] ?? [] )
-        );
+        $type_lbl  = \WG\Konfigurator\Services\PriceCalculator::type_label( (string) ( $quiz['video_typ'] ?? '' ) );
+        $paket_lbl = $quiz['output_paket'] ? \WG\Konfigurator\Services\PriceCalculator::paket_label( (string) $quiz['output_paket'] ) : '–';
+        $laenge_lbl = $quiz['video_laenge'] ? \WG\Konfigurator\Services\PriceCalculator::length_label( (string) $quiz['video_laenge'] ) : '–';
+        $feat_lbl = \WG\Konfigurator\Services\PriceCalculator::feature_labels( (array) ( $quiz['features'] ?? [] ) );
     ?>
     <h3 style="margin:18px 0 6px;">Quiz</h3>
     <table cellpadding="4" cellspacing="0" style="font-size:13px;border-collapse:collapse;">
-        <tr><td><strong>Video-Typ</strong></td><td><?php echo esc_html( (string) ( $quiz['video_typ'] ?? '–' ) ); ?></td></tr>
+        <tr><td><strong>Video-Typ</strong></td><td><?php echo esc_html( $type_lbl ); ?></td></tr>
         <tr><td><strong>Output-Paket</strong></td><td><?php echo esc_html( $paket_lbl ); ?></td></tr>
+        <tr><td><strong>Video-Länge</strong></td><td><?php echo esc_html( $laenge_lbl ); ?></td></tr>
         <tr><td><strong>Features</strong></td><td><?php echo esc_html( $feat_lbl ? implode( ', ', $feat_lbl ) : 'Standard-Setup' ); ?></td></tr>
         <tr><td><strong>Drehtage (intern)</strong></td><td><?php echo (int) ( $pricing['drehtage'] ?? 1 ); ?></td></tr>
         <tr><td><strong>Zeitrahmen</strong></td><td><?php echo esc_html( (string) ( $quiz['zeitrahmen'] ?? '–' ) ); ?></td></tr>
         <tr><td><strong>Branche</strong></td><td><?php echo esc_html( (string) ( $quiz['branche'] ?? '–' ) ); ?></td></tr>
         <tr><td><strong>Website</strong></td><td><?php echo esc_html( (string) ( $quiz['website'] ?? '–' ) ); ?></td></tr>
         <tr><td><strong>Ziel</strong></td><td><?php echo esc_html( (string) ( $quiz['ziel'] ?? '–' ) ); ?></td></tr>
+    </table>
+
+    <h3 style="margin:18px 0 6px;">Preis-Aufschlüsselung</h3>
+    <table cellpadding="3" cellspacing="0" style="font-size:13px;border-collapse:collapse;">
+        <?php foreach ( (array) ( $pricing['items'] ?? [] ) as $it ) :
+            $val = ( (int) $it['min'] === (int) $it['max'] )
+                ? number_format( (int) $it['min'], 0, ',', '.' ) . ' €'
+                : number_format( (int) $it['min'], 0, ',', '.' ) . ' – ' . number_format( (int) $it['max'], 0, ',', '.' ) . ' €';
+        ?>
+            <tr>
+                <td style="border-bottom:1px solid #eee;"><?php echo esc_html( (string) $it['label'] ); ?></td>
+                <td style="border-bottom:1px solid #eee;text-align:right;font-variant-numeric:tabular-nums;"><?php echo esc_html( $val ); ?></td>
+            </tr>
+        <?php endforeach; ?>
     </table>
 
     <h3 style="margin:18px 0 6px;">Preis</h3>

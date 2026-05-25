@@ -49,13 +49,8 @@ final class Settings {
             'recaptcha_site'   => '',
             'recaptcha_secret' => '',
 
-            // Preis-Logik
-            'price_base'       => [
-                'imagefilm'   => [ 'min' => 2490, 'max' => 4490 ],
-                'werbespot'   => [ 'min' => 1490, 'max' => 3490 ],
-                'recruiting'  => [ 'min' => 1990, 'max' => 3990 ],
-                'erklaervideo'=> [ 'min' => 2990, 'max' => 5490 ],
-            ],
+            // Preis-Logik (Basis-Preise jetzt im PriceCalculator hardcoded — v0.5.0)
+            'price_base'       => [],
             'price_per_day'    => 850,
             'express_surcharge'=> 0.20,
         ];

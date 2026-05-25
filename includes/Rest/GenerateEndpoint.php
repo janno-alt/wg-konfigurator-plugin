@@ -111,7 +111,7 @@ final class GenerateEndpoint {
 
         $quiz = [
             'video_typ'    => sanitize_text_field( (string) ( $quiz['video_typ']    ?? '' ) ),
-            'output_paket' => sanitize_text_field( (string) ( $quiz['output_paket'] ?? 'einzel' ) ),
+            'output_paket' => sanitize_text_field( (string) ( $quiz['output_paket'] ?? '' ) ),
             'video_laenge' => sanitize_text_field( (string) ( $quiz['video_laenge'] ?? 'medium' ) ),
             'features'     => $features,
             'zeitrahmen'   => sanitize_text_field( (string) ( $quiz['zeitrahmen']   ?? '' ) ),
@@ -168,12 +168,14 @@ final class GenerateEndpoint {
             // hängen die neuen Felder zusätzlich an, damit das CRM sie im rawPayload
             // mitspeichert.
             $features_label = PriceCalculator::feature_labels( $quiz['features'] );
-            $paket_label    = PriceCalculator::paket_label( $quiz['output_paket'] );
-            $length_label   = PriceCalculator::length_label( $quiz['video_laenge'] );
+            $type_label     = PriceCalculator::type_label( $quiz['video_typ'] );
+            $paket_label    = $quiz['output_paket'] ? PriceCalculator::paket_label( $quiz['output_paket'] ) : '';
+            $length_label   = $quiz['video_laenge'] ? PriceCalculator::length_label( $quiz['video_laenge'] ) : '';
 
             $ziel_kombiniert = trim( implode( ' | ', array_filter( [
+                'Typ: ' . $type_label,
                 $paket_label,
-                'Länge: ' . $length_label,
+                $length_label ? 'Länge: ' . $length_label : '',
                 $features_label ? 'Features: ' . implode( ', ', $features_label ) : '',
                 $quiz['ziel'] ?: '',
             ] ) ) );

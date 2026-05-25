@@ -1,53 +1,45 @@
 import React from 'react';
+import { isFeatureAvailable } from './pricing.js';
 
 /* ============================================================
    Quiz aus Kundensicht.
-   - Image-Buttons mit Emoji-Icons
-   - Features reduziert auf 4 (Untertitel + Musik = Standard, immer inkl.)
-   - Website-Input akzeptiert auch "deine-firma.de" ohne https
-   - Volles Namensfeld
+   - 8 Video-Typen in 2 Sektionen
+   - Quiz-Flow verzweigt je nach Typ (siehe stepsForType)
+   - Feature-Liste filtert sich je nach Typ
    ============================================================ */
 
-const VIDEO_TYPEN = [
-  { id: 'imagefilm',    label: 'Imagefilm',         hint: 'Marke greifbar machen, Vertrauen aufbauen', icon: '🎬' },
-  { id: 'werbespot',    label: 'Werbespot / Reel',  hint: 'Verkauf, Reichweite, Social-Hook',         icon: '📱' },
-  { id: 'recruiting',   label: 'Recruiting-Video',  hint: 'Bewerber:innen gewinnen',                  icon: '🤝' },
-  { id: 'erklaervideo', label: 'Erklärvideo',       hint: 'Komplexes verständlich machen',            icon: '💡' },
+const VIDEO_TYPEN_CLASSIC = [
+  { id: 'imagefilm',  label: 'Imagefilm',         hint: 'Marke greifbar machen',            icon: '🎬' },
+  { id: 'werbespot',  label: 'Werbespot',         hint: 'Verkauf, Hero-Video, Pre-Roll',    icon: '📣' },
+  { id: 'recruiting', label: 'Recruiting-Video',  hint: 'Bewerber:innen gewinnen',          icon: '🤝' },
+  { id: 'reel_paket', label: 'Reel-Paket',        hint: '12 Reels in einem ½ Drehtag',      icon: '📱', badge: 'Abo 3 × 500 €' },
+];
+
+const VIDEO_TYPEN_ANIMATION = [
+  { id: 'erklaer_real',   label: 'Erklärvideo (Real)',   hint: 'Mit echtem Material gedreht', icon: '💡' },
+  { id: 'erklaer_anim',   label: 'Erklärvideo (2D)',     hint: 'Animiertes Erklärvideo',      icon: '✏️' },
+  { id: 'animation_3d',   label: '3D-Animation',         hint: 'Volumen, Materialien, Licht', icon: '🧊' },
+  { id: 'animation_tech', label: 'Technische Animation', hint: 'Maschinen, Bauteile, Prozess', icon: '⚙️' },
 ];
 
 const OUTPUT_PAKETE = [
-  {
-    id: 'einzel',
-    label: 'Ein fertiges Hauptvideo',
-    hint: 'Z. B. ein Image-/Recruiting-Spot für deine Website oder einen Kanal.',
-    icon: '🎯',
-  },
-  {
-    id: 'paket',
-    label: 'Hauptvideo + Social-Cuts',
-    hint: '1 Hauptvideo + 2–3 kurze Versionen (Reels/Shorts/TikTok) für Social.',
-    icon: '📦',
-    badge: 'Empfohlen',
-  },
-  {
-    id: 'kampagne',
-    label: 'Vollkampagne',
-    hint: 'Hauptvideo + Social-Cuts + Behind-the-Scenes + Story-Snippets.',
-    icon: '🚀',
-  },
+  { id: 'einzel',   label: 'Ein fertiges Hauptvideo',    hint: 'Z. B. ein Image-Spot für deine Website oder einen Kanal.',                       icon: '🎯' },
+  { id: 'paket',    label: 'Hauptvideo + Social-Cuts',   hint: '1 Hauptvideo + 2–3 kurze Versionen (Reels/Shorts) für Social.', icon: '📦', badge: 'Empfohlen' },
+  { id: 'kampagne', label: 'Vollkampagne',               hint: 'Hauptvideo + Social-Cuts + Behind-the-Scenes + Story-Snippets.', icon: '🚀' },
 ];
 
 const VIDEO_LAENGEN = [
-  { id: 'short',      label: '15–30 Sek.',  hint: 'Reel, Short, TikTok – ein Punch.',                icon: '⚡' },
-  { id: 'medium',     label: '60–90 Sek.',  hint: 'Klassischer Spot, Pre-Roll, Hero-Video.',         icon: '🎞️' },
-  { id: 'long',       label: '2–3 Min.',    hint: 'Imagefilm mit Story und mehreren Szenen.',        icon: '📺' },
-  { id: 'extra_long', label: '4–5 Min.',    hint: 'Erklärfilm, Mitarbeiter-Portrait, Bewegt-FAQ.',   icon: '🎥' },
+  { id: 'short',      label: '15–30 Sek.', hint: 'Reel, Short, TikTok – ein Punch.',            icon: '⚡' },
+  { id: 'medium',     label: '60–90 Sek.', hint: 'Klassischer Spot, Pre-Roll, Hero-Video.',     icon: '🎞️' },
+  { id: 'long',       label: '2–3 Min.',   hint: 'Imagefilm mit Story und mehreren Szenen.',    icon: '📺' },
+  { id: 'extra_long', label: '4–5 Min.',   hint: 'Erklärfilm, Mitarbeiter-Portrait, Bewegt-FAQ.', icon: '🎥' },
 ];
 
 const FEATURES = [
   { id: 'voiceover',    label: 'Voiceover / Sprecher:in',        icon: '🎙️' },
   { id: 'animation',    label: 'Animierte Texte / Lower-Thirds', icon: '✨' },
   { id: 'drohne',       label: 'Drohnen-Aufnahmen',              icon: '🚁' },
+  { id: 'sound',        label: 'Sound Design (Atmo, SFX)',       icon: '🔊' },
   { id: 'mehrsprachig', label: 'Mehrsprachige Versionen',        icon: '🌐' },
 ];
 
@@ -89,7 +81,7 @@ export default function Quiz(props) {
     });
   }
 
-  /* ---------- Step 1: Video-Typ ---------- */
+  /* ---------- Step 1: Video-Typ (2 Sektionen) ---------- */
   if (key === 'video_typ') {
     return (
       <Step
@@ -98,8 +90,24 @@ export default function Quiz(props) {
         canNext={!!answers.video_typ}
         onNext={onNext}
       >
+        <h3 className="wgk__section-title">📹 Klassische Videoproduktion</h3>
         <div className="wgk__grid wgk__grid--2">
-          {VIDEO_TYPEN.map((t) => (
+          {VIDEO_TYPEN_CLASSIC.map((t) => (
+            <IconCard
+              key={t.id}
+              icon={t.icon}
+              label={t.label}
+              hint={t.hint}
+              badge={t.badge}
+              active={answers.video_typ === t.id}
+              onClick={() => set('video_typ', t.id)}
+            />
+          ))}
+        </div>
+
+        <h3 className="wgk__section-title" style={{ marginTop: 18 }}>🎨 Erklärvideo & Animation</h3>
+        <div className="wgk__grid wgk__grid--2">
+          {VIDEO_TYPEN_ANIMATION.map((t) => (
             <IconCard
               key={t.id}
               icon={t.icon}
@@ -114,7 +122,7 @@ export default function Quiz(props) {
     );
   }
 
-  /* ---------- Step 2: Output-Paket ---------- */
+  /* ---------- Step 2: Output-Paket (nur bei klassischen Videos) ---------- */
   if (key === 'output_paket') {
     return (
       <Step
@@ -144,10 +152,13 @@ export default function Quiz(props) {
 
   /* ---------- Step 3: Video-Länge ---------- */
   if (key === 'video_laenge') {
+    const isPerMinute = ['erklaer_real', 'erklaer_anim', 'animation_3d', 'animation_tech'].includes(answers.video_typ);
     return (
       <Step
-        title="Wie lang soll dein Hauptvideo sein?"
-        subtitle="Längere Videos brauchen mehr Story-Bögen und mehr Schnitt. Der Preis passt sich entsprechend an."
+        title="Wie lang soll dein Video sein?"
+        subtitle={isPerMinute
+          ? 'Bei Animation und Erklärvideos ist die Länge der Haupt-Preistreiber – jede Minute mehr braucht mehr Aufwand.'
+          : 'Längere Videos brauchen mehr Story-Bögen und mehr Schnitt.'}
         canNext={!!answers.video_laenge}
         onNext={onNext}
         onBack={onBack}
@@ -168,9 +179,11 @@ export default function Quiz(props) {
     );
   }
 
-  /* ---------- Step 4: Features ---------- */
+  /* ---------- Step 4: Features (gefiltert nach Typ-Support) ---------- */
   if (key === 'features') {
     const sel = Array.isArray(answers.features) ? answers.features : [];
+    const availableFeatures = FEATURES.filter((f) => isFeatureAvailable(answers.video_typ, f.id));
+
     return (
       <Step
         title="Welche Features soll dein Video haben?"
@@ -180,23 +193,27 @@ export default function Quiz(props) {
         onNext={onNext}
         onBack={onBack}
       >
-        <div className="wgk__checklist">
-          {FEATURES.map((f) => {
-            const checked = sel.includes(f.id);
-            return (
-              <button
-                type="button"
-                key={f.id}
-                className={`wgk__checkitem ${checked ? 'is-checked' : ''}`}
-                onClick={() => toggleFeature(f.id)}
-              >
-                <span className="wgk__checkitem-icon">{f.icon}</span>
-                <span className="wgk__checkitem-label">{f.label}</span>
-                <span className="wgk__checkitem-box">{checked ? '✓' : ''}</span>
-              </button>
-            );
-          })}
-        </div>
+        {availableFeatures.length === 0 ? (
+          <p className="wgk__note">Für diese Auswahl sind alle Standard-Features bereits inklusive.</p>
+        ) : (
+          <div className="wgk__checklist">
+            {availableFeatures.map((f) => {
+              const checked = sel.includes(f.id);
+              return (
+                <button
+                  type="button"
+                  key={f.id}
+                  className={`wgk__checkitem ${checked ? 'is-checked' : ''}`}
+                  onClick={() => toggleFeature(f.id)}
+                >
+                  <span className="wgk__checkitem-icon">{f.icon}</span>
+                  <span className="wgk__checkitem-label">{f.label}</span>
+                  <span className="wgk__checkitem-box">{checked ? '✓' : ''}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </Step>
     );
   }
@@ -318,7 +335,7 @@ export default function Quiz(props) {
           />
           <span>Ja, gelegentlich Updates zu Videomarketing-Tipps von WG-Digital erhalten (jederzeit abbestellbar).</span>
         </label>
-        <p className="wgk__note">Kein Spam, keine automatischen Newsletter ohne dein OK.</p>
+        <p className="wgk__note">Kein Spam, keine automatischen Newsletter ohne dein OK. Alle Preise verstehen sich netto.</p>
         {error && <p className="wgk__error">{error}</p>}
       </Step>
     );

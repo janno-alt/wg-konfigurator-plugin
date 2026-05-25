@@ -26,19 +26,6 @@ $fmt_eur = static function ( $n ): string {
     return number_format( (int) $n, 0, ',', '.' ) . ' €';
 };
 
-$paket_label    = \WG\Konfigurator\Services\PriceCalculator::paket_label(
-    (string) ( $quiz['output_paket'] ?? 'einzel' )
-);
-$features_label = \WG\Konfigurator\Services\PriceCalculator::feature_labels(
-    (array) ( $quiz['features'] ?? [] )
-);
-
-$length_label = [
-    'short'      => '15–30 Sek. (Reel / Short)',
-    'medium'     => '60–90 Sek. (Spot)',
-    'long'       => '2–3 Min. (Imagefilm)',
-    'extra_long' => '4–5 Min. (Erklärfilm)',
-][ $quiz['video_laenge'] ?? '' ] ?? '–';
 ?><!DOCTYPE html>
 <html lang="de">
 <head>
@@ -162,12 +149,30 @@ $length_label = [
         </p>
     </div>
 
+    <h3>Investitions-Aufschlüsselung</h3>
+    <table class="kv">
+        <?php foreach ( (array) ( $pricing['items'] ?? [] ) as $it ) :
+            $val = ( (int) $it['min'] === (int) $it['max'] )
+                ? number_format( (int) $it['min'], 0, ',', '.' ) . ' €'
+                : number_format( (int) $it['min'], 0, ',', '.' ) . ' – ' . number_format( (int) $it['max'], 0, ',', '.' ) . ' €';
+        ?>
+            <tr>
+                <td class="k" style="text-transform:none;letter-spacing:0;color:#CCC;font-size:10pt;width:65%;"><?php echo esc_html( (string) $it['label'] ); ?></td>
+                <td class="v" style="text-align:right;"><?php echo esc_html( $val ); ?></td>
+            </tr>
+        <?php endforeach; ?>
+    </table>
+    <p class="note" style="margin-top:4pt;">Alle Preise netto, zzgl. MwSt. Untertitel und lizenzierte Musik immer inklusive.</p>
+
     <h3>Eckdaten deiner Anfrage</h3>
     <table class="kv">
-        <tr><td class="k">Video-Typ</td>     <td class="v"><?php echo esc_html( ucfirst( (string) ( $pricing['breakdown']['video_typ'] ?? '–' ) ) ); ?></td></tr>
-        <tr><td class="k">Output-Paket</td>  <td class="v"><?php echo esc_html( $paket_label ); ?></td></tr>
-        <tr><td class="k">Video-Länge</td>   <td class="v"><?php echo esc_html( $length_label ); ?></td></tr>
-        <tr><td class="k">Features</td>      <td class="v"><?php echo esc_html( $features_label ? implode( ', ', $features_label ) : 'Standard-Setup' ); ?></td></tr>
+        <tr><td class="k">Video-Typ</td>     <td class="v"><?php echo esc_html( \WG\Konfigurator\Services\PriceCalculator::type_label( (string) ( $pricing['breakdown']['video_typ'] ?? '' ) ) ); ?></td></tr>
+        <?php if ( ! empty( $quiz['output_paket'] ) ) : ?>
+            <tr><td class="k">Output-Paket</td>  <td class="v"><?php echo esc_html( \WG\Konfigurator\Services\PriceCalculator::paket_label( (string) $quiz['output_paket'] ) ); ?></td></tr>
+        <?php endif; ?>
+        <?php if ( ! empty( $quiz['video_laenge'] ) ) : ?>
+            <tr><td class="k">Video-Länge</td>   <td class="v"><?php echo esc_html( \WG\Konfigurator\Services\PriceCalculator::length_label( (string) $quiz['video_laenge'] ) ); ?></td></tr>
+        <?php endif; ?>
         <tr><td class="k">Zeitrahmen</td>    <td class="v"><?php echo esc_html( (string) ( $quiz['zeitrahmen'] ?? '–' ) ); ?></td></tr>
         <tr><td class="k">Branche</td>       <td class="v"><?php echo esc_html( (string) ( $quiz['branche'] ?? '–' ) ); ?></td></tr>
         <tr><td class="k">Website</td>       <td class="v"><?php echo esc_html( (string) ( $quiz['website'] ?? '–' ) ); ?></td></tr>

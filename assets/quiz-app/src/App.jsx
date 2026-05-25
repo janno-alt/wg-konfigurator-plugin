@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Quiz from './Quiz.jsx';
 import Result from './Result.jsx';
 import PriceSidebar from './PriceSidebar.jsx';
-
-const STEPS = ['video_typ', 'output_paket', 'video_laenge', 'features', 'zeitrahmen', 'kontext', 'lead'];
+import { stepsForType } from './pricing.js';
 
 export default function App({ theme = 'dark' }) {
   const config = window.WG_KONFIGURATOR || {};
@@ -23,11 +22,21 @@ export default function App({ theme = 'dark' }) {
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
 
-  const total = STEPS.length;
+  // Steps werden dynamisch berechnet — je nach Video-Typ unterschiedlich
+  const steps = useMemo(() => stepsForType(answers.video_typ), [answers.video_typ]);
+  const total = steps.length;
   const progress = Math.round((step / total) * 100);
 
   function next() { setStep((s) => Math.min(s + 1, total)); }
   function back() { setStep((s) => Math.max(0, s - 1)); }
+
+  // Wenn der Nutzer Video-Typ ändert und die neuen Steps anders sind:
+  // step zurücksetzen, falls der aktuelle Step nicht mehr im Flow ist
+  React.useEffect(() => {
+    if (step >= steps.length) {
+      setStep(Math.max(0, steps.length - 1));
+    }
+  }, [steps.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function submit() {
     setSubmitting(true);
@@ -45,8 +54,6 @@ export default function App({ theme = 'dark' }) {
         });
       }
 
-      // Website: User kann "deine-firma.de" oder "https://deine-firma.de"
-      // eingeben. Wir normalisieren auf der Client-Seite, falls möglich.
       const normalizedWebsite = normalizeWebsite(answers.website);
 
       const response = await fetch(config.restUrl, {
@@ -100,7 +107,7 @@ export default function App({ theme = 'dark' }) {
         <div className="wgk__layout-main">
           <Quiz
             step={step}
-            steps={STEPS}
+            steps={steps}
             answers={answers}
             setAnswers={setAnswers}
             lead={lead}

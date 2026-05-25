@@ -189,6 +189,13 @@
   font-variant-numeric: tabular-nums;
   line-height: 1.2;
 }
+.wgk__pricesidebar-payment {
+  display: block;
+  font-size: 11px;
+  color: var(--wgk-muted);
+  margin-top: 4px;
+  font-weight: 500;
+}
 .wgk__pricesidebar-incl {
   font-size: 11px;
   color: var(--wgk-muted);
@@ -234,6 +241,18 @@
 }
 
 .wgk__stack { display: flex; flex-direction: column; gap: 10px; }
+
+/* ---------- Sektions-Überschrift (auf Step 1: Video-Typ in 2 Sektionen) ---------- */
+.wgk .wgk__section-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--wgk-muted);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  margin: 0 0 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--wgk-border);
+}
 
 /* ---------- Icon-Card (Hauptauswahl: Video-Typ, Output, Länge) ---------- */
 .wgk button.wgk__iconcard {

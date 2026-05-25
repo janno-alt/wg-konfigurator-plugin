@@ -117,39 +117,26 @@ TEXT;
     }
 
     private function build_prompt( array $quiz, string $website ): string {
-        $paket_labels = [
-            'einzel'   => 'Ein fertiges Hauptvideo',
-            'paket'    => 'Hauptvideo + 2–3 Social-Cuts (Reels/Shorts)',
-            'kampagne' => 'Vollkampagne: Hauptvideo + Social-Cuts + Behind-the-Scenes',
-        ];
-        $laenge_labels = [
-            'short'      => '15–30 Sekunden (Reel/Short)',
-            'medium'     => '60–90 Sekunden (Spot)',
-            'long'       => '2–3 Minuten (Imagefilm)',
-            'extra_long' => '4–5 Minuten (Erklärfilm)',
-        ];
-        $feature_labels = [
-            'voiceover'    => 'Voiceover/Sprecher:in',
-            'untertitel'   => 'Untertitel',
-            'animation'    => 'Animierte Texte/Lower-Thirds',
-            'drohne'       => 'Drohnen-Aufnahmen',
-            'musik'        => 'Lizenzierte Musik',
-            'mehrsprachig' => 'Mehrsprachige Versionen',
-        ];
+        $type_label  = \WG\Konfigurator\Services\PriceCalculator::type_label( (string) ( $quiz['video_typ'] ?? '' ) );
+        $paket_label = $quiz['output_paket']
+            ? \WG\Konfigurator\Services\PriceCalculator::paket_label( (string) $quiz['output_paket'] )
+            : '(kein Paket gewählt – kein klassisches Drehprojekt)';
+        $laenge_label = $quiz['video_laenge']
+            ? \WG\Konfigurator\Services\PriceCalculator::length_label( (string) $quiz['video_laenge'] )
+            : '60–90 Sekunden';
 
-        $paket    = $paket_labels[ $quiz['output_paket']  ?? '' ] ?? '(kein Paket gewählt)';
-        $laenge   = $laenge_labels[ $quiz['video_laenge'] ?? '' ] ?? '60–90 Sekunden';
-        $features = array_map(
-            static fn ( $f ) => $feature_labels[ $f ] ?? $f,
+        $feature_labels = \WG\Konfigurator\Services\PriceCalculator::feature_labels(
             (array) ( $quiz['features'] ?? [] )
         );
-        $features_text = $features ? implode( ', ', $features ) : '(keine gewählt – standardmäßig Branding-Anim, Schnitt, plattformgerechter Export)';
+        $features_text = $feature_labels
+            ? implode( ', ', $feature_labels )
+            : '(keine zusätzlichen Features gewählt – Standard: Untertitel + lizenzierte Musik immer inklusive)';
 
         $context_str = '';
         foreach ( [
-            'Video-Typ'         => (string) ( $quiz['video_typ']   ?? '' ),
-            'Output-Paket'      => $paket,
-            'Video-Länge'       => $laenge,
+            'Video-Typ'         => $type_label,
+            'Output-Paket'      => $paket_label,
+            'Video-Länge'       => $laenge_label,
             'Gewählte Features' => $features_text,
             'Zeitrahmen'        => (string) ( $quiz['zeitrahmen']  ?? '' ),
             'Branche'           => (string) ( $quiz['branche']     ?? '' ),

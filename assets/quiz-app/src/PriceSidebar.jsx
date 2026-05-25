@@ -13,8 +13,8 @@ export default function PriceSidebar({ answers }) {
 
       {!breakdown.ready && (
         <p className="wgk__pricesidebar-empty">
-          Wähle Video-Typ und Liefer-Paket — dann siehst du hier die geschätzte
-          Range, aufgeschlüsselt nach Posten.
+          Wähle erst einen Video-Typ — sobald genug Angaben da sind, siehst du hier
+          die geschätzte Range, aufgeschlüsselt nach Posten.
         </p>
       )}
 
@@ -32,16 +32,19 @@ export default function PriceSidebar({ answers }) {
           </ul>
 
           <div className="wgk__pricesidebar-total">
-            <span className="wgk__pricesidebar-total-label">Gesamt</span>
+            <span className="wgk__pricesidebar-total-label">Gesamt netto</span>
             <strong className="wgk__pricesidebar-total-value">
               {fmtRange(breakdown.total_min, breakdown.total_max)}
             </strong>
+            {breakdown.payment_note && (
+              <span className="wgk__pricesidebar-payment">{breakdown.payment_note}</span>
+            )}
           </div>
 
           <p className="wgk__pricesidebar-incl">
             Inklusive: <strong>Untertitel</strong> für Stumm-Wiedergabe,
-            <strong> lizenzierte Musik</strong>, Konzept, Schnitt, plattformgerechter
-            Export. Reisekosten ab 100 km separat.
+            <strong> lizenzierte Musik</strong>, Schnitt, plattformgerechter Export.
+            Reisekosten ab 100 km separat. Alle Preise zzgl. MwSt.
           </p>
         </>
       )}
