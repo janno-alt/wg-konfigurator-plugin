@@ -94,7 +94,7 @@ export default function Quiz(props) {
     return (
       <Step
         title="Wie viel Budget hast du eingeplant?"
-        subtitle="Keine Sorge — wir empfehlen passend zum Budget. „Weiß noch nicht" ist auch eine Antwort."
+        subtitle={'Keine Sorge — wir empfehlen passend zum Budget. „Weiß noch nicht" ist auch eine Antwort.'}
         canNext={!!answers.budget}
         onNext={onNext}
         onBack={onBack}
