@@ -1,12 +1,14 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Intro from './Intro.jsx';
 import Quiz from './Quiz.jsx';
 import Result from './Result.jsx';
 import Loading from './Loading.jsx';
 import PriceSidebar from './PriceSidebar.jsx';
-import { stepsForType } from './pricing.js';
+import { recommend } from './recommendation.js';
 
 /* Phasen: 'intro' → 'quiz' → 'loading' → 'result' */
+
+const STEPS = ['goal', 'branche', 'budget', 'zeitrahmen', 'kontext'];
 
 export default function App({ theme = 'dark' }) {
   const config = window.WG_KONFIGURATOR || {};
@@ -14,14 +16,12 @@ export default function App({ theme = 'dark' }) {
   const [sessionId, setSessionId] = useState('');
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState({
-    video_typ: '',
-    output_paket: '',
-    video_laenge: 'medium',
-    features: [],
-    zeitrahmen: '',
+    goal: '',           // NEU: Ziel des Kunden
+    budget: '',         // NEU: Budget-Range
     branche: '',
+    zeitrahmen: '',
     website: '',
-    ziel: '',
+    ziel: '',           // Freitext-Ziel (zusätzlich zu goal)
   });
   const [lead, setLead] = useState({
     name: '',
@@ -34,27 +34,29 @@ export default function App({ theme = 'dark' }) {
   const [result, setResult]         = useState(null);
   const [error, setError]           = useState('');
 
-  // Steps werden dynamisch berechnet — je nach Video-Typ unterschiedlich
-  const steps = useMemo(() => stepsForType(answers.video_typ), [answers.video_typ]);
-  const total = steps.length;
+  // Recommendation wird live aus goal + budget berechnet
+  const recommendation = useMemo(() => {
+    if (!answers.goal) return null;
+    return recommend(answers.goal, answers.budget || 'unknown');
+  }, [answers.goal, answers.budget]);
+
+  // Quiz-State, der an pricing.js übergeben wird, inkl. errechnete Empfehlung
+  const effectiveAnswers = useMemo(() => {
+    if (!recommendation) return answers;
+    return {
+      ...answers,
+      video_typ:    recommendation.video_typ,
+      output_paket: recommendation.output_paket || '',
+      video_laenge: recommendation.video_laenge || 'medium',
+      features:     recommendation.features || [],
+    };
+  }, [answers, recommendation]);
+
+  const total = STEPS.length;
   const progress = Math.round((step / total) * 100);
 
   function next() { setStep((s) => Math.min(s + 1, total)); }
   function back() { setStep((s) => Math.max(0, s - 1)); }
-
-  React.useEffect(() => {
-    if (step >= steps.length) {
-      setStep(Math.max(0, steps.length - 1));
-    }
-  }, [steps.length]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Wenn der gewählte Video-Typ kein output_paket-Step hat, leeren wir das Feld
-  // damit die Sidebar nicht mit einem hängengebliebenen Paket rechnet.
-  React.useEffect(() => {
-    if (!steps.includes('output_paket') && answers.output_paket !== '') {
-      setAnswers((a) => ({ ...a, output_paket: '' }));
-    }
-  }, [steps.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* ---------- Intro → Quiz ---------- */
   async function handleStart() {
@@ -81,9 +83,6 @@ export default function App({ theme = 'dark' }) {
       if (data.session_id) setSessionId(data.session_id);
       setPhase('quiz');
     } catch (e) {
-      // Nicht-blockierend: Start funktioniert auch ohne erfolgreichen /start
-      // (CRM-Endpoint könnte offline sein, wir wollen den User nicht abhalten).
-      // Stattdessen loggen wir den Fehler und gehen trotzdem weiter.
       console.warn('[wg-konfigurator] /start failed, continuing anyway:', e.message);
       setPhase('quiz');
     } finally {
@@ -91,7 +90,7 @@ export default function App({ theme = 'dark' }) {
     }
   }
 
-  /* ---------- Quiz Submit → Loading → Result ---------- */
+  /* ---------- Submit → Loading → Result ---------- */
   async function submit() {
     setSubmitting(true);
     setPhase('loading');
@@ -111,12 +110,23 @@ export default function App({ theme = 'dark' }) {
 
       const normalizedWebsite = normalizeWebsite(answers.website);
 
+      // Wir schicken die Roh-Quiz-Antworten + die Recommendation ans Backend.
+      // Der Server berechnet seine eigene Empfehlung nochmal (Source of Truth)
+      // und gleicht sie ggf. ab.
       const response = await fetch(config.restUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': config.nonce },
         body: JSON.stringify({
           lead,
-          quiz: { ...answers, website: normalizedWebsite },
+          quiz: {
+            ...answers,
+            website: normalizedWebsite,
+            // Recommendation-Output direkt mitgeben für CRM
+            video_typ:    recommendation?.video_typ,
+            output_paket: recommendation?.output_paket || '',
+            video_laenge: recommendation?.video_laenge || 'medium',
+            features:     recommendation?.features || [],
+          },
           tracking: config.tracking || {},
           session_id: sessionId,
           recaptcha_token: recaptchaToken,
@@ -132,17 +142,16 @@ export default function App({ theme = 'dark' }) {
         window.dataLayer = window.dataLayer || [];
         window.dataLayer.push({
           event: 'konfigurator_completed',
-          video_typ: answers.video_typ,
-          output_paket: answers.output_paket,
-          video_laenge: answers.video_laenge,
-          zeitrahmen: answers.zeitrahmen,
+          goal: answers.goal,
+          budget: answers.budget,
+          video_typ: recommendation?.video_typ,
           preis_min: data.preis_min,
           preis_max: data.preis_max,
         });
       } catch (e) { /* noop */ }
     } catch (e) {
       setError(e.message);
-      setPhase('quiz'); // zurück, damit User retry kann
+      setPhase('quiz');
     } finally {
       setSubmitting(false);
     }
@@ -181,11 +190,11 @@ export default function App({ theme = 'dark' }) {
         <div className="wgk__layout-main">
           <Quiz
             step={step}
-            steps={steps}
+            steps={STEPS}
             answers={answers}
             setAnswers={setAnswers}
             lead={lead}
-            setLead={setLead}
+            recommendation={recommendation}
             onNext={next}
             onBack={back}
             onSubmit={submit}
@@ -194,7 +203,7 @@ export default function App({ theme = 'dark' }) {
           />
         </div>
         <div className="wgk__layout-side">
-          <PriceSidebar answers={answers} />
+          <PriceSidebar answers={effectiveAnswers} recommendation={recommendation} />
         </div>
       </div>
     </div>

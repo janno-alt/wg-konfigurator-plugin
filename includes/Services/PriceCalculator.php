@@ -15,13 +15,13 @@ use WG\Konfigurator\Admin\Settings;
  */
 final class PriceCalculator {
 
-    private const KONZEPT_PAUSCHALE = 1000;
+    private const KONZEPT_PAUSCHALE = 800;
 
-    /** @var array<string,array<string,mixed>> */
+    /** @var array<string,array<string,mixed>> Preise um 20 % reduziert (v0.9.0) */
     private const VIDEO_TYPES = [
         'imagefilm'       => [
             'label' => 'Imagefilm', 'model' => 'flat',
-            'base_min' => 2000, 'base_max' => 3000,
+            'base_min' => 1600, 'base_max' => 2400,
             'has_konzept' => true, 'has_drohne' => true, 'has_voiceover' => true,
             'has_animation' => true, 'has_sound' => true, 'has_mehrsprachig' => true,
             'has_paket' => true, 'has_laenge' => true,
@@ -29,7 +29,7 @@ final class PriceCalculator {
         ],
         'werbespot'       => [
             'label' => 'Werbespot', 'model' => 'flat',
-            'base_min' => 2500, 'base_max' => 3750,
+            'base_min' => 2000, 'base_max' => 3000,
             'has_konzept' => true, 'has_drohne' => true, 'has_voiceover' => true,
             'has_animation' => true, 'has_sound' => true, 'has_mehrsprachig' => true,
             'has_paket' => true, 'has_laenge' => true,
@@ -37,16 +37,16 @@ final class PriceCalculator {
         ],
         'recruiting'      => [
             'label' => 'Recruiting-Video', 'model' => 'flat',
-            'base_min' => 2500, 'base_max' => 3750,
+            'base_min' => 2000, 'base_max' => 3000,
             'has_konzept' => true, 'has_drohne' => true, 'has_voiceover' => true,
-            'has_animation' => false,  // Captions sind Standard
+            'has_animation' => false,
             'has_sound' => true, 'has_mehrsprachig' => true,
             'has_paket' => true, 'has_laenge' => true,
             'lengths' => [ 'medium', 'long' ],
         ],
         'reel_paket'      => [
             'label' => 'Reel-Paket (12 Kurzvideos)', 'model' => 'fixed',
-            'base_min' => 1500, 'base_max' => 1500,
+            'base_min' => 1500, 'base_max' => 1500,   // Bleibt: 3×500€/Monat ist etabliert
             'has_konzept' => false, 'has_drohne' => true, 'has_voiceover' => false,
             'has_animation' => false, 'has_sound' => false, 'has_mehrsprachig' => false,
             'has_paket' => false, 'has_laenge' => false,
@@ -56,7 +56,7 @@ final class PriceCalculator {
         ],
         'erklaer_real'    => [
             'label' => 'Erklärvideo (mit Real-Material)', 'model' => 'per_minute',
-            'base_min' => 1000, 'base_max' => 1500,
+            'base_min' => 800, 'base_max' => 1200,
             'has_konzept' => true, 'has_drohne' => true, 'has_voiceover' => true,
             'has_animation' => true, 'has_sound' => true, 'has_mehrsprachig' => true,
             'has_paket' => false, 'has_laenge' => true,
@@ -64,7 +64,7 @@ final class PriceCalculator {
         ],
         'erklaer_anim'    => [
             'label' => 'Erklärvideo (Animation)', 'model' => 'per_minute',
-            'base_min' => 1500, 'base_max' => 2250,
+            'base_min' => 1200, 'base_max' => 1800,
             'has_konzept' => true, 'has_drohne' => false, 'has_voiceover' => true,
             'has_animation' => false, 'has_sound' => true, 'has_mehrsprachig' => true,
             'has_paket' => false, 'has_laenge' => true,
@@ -72,7 +72,7 @@ final class PriceCalculator {
         ],
         'animation_3d'    => [
             'label' => '3D-Animation', 'model' => 'per_minute',
-            'base_min' => 2000, 'base_max' => 3000,
+            'base_min' => 1600, 'base_max' => 2400,
             'has_konzept' => true, 'has_drohne' => false, 'has_voiceover' => true,
             'has_animation' => false, 'has_sound' => true, 'has_mehrsprachig' => true,
             'has_paket' => false, 'has_laenge' => true,
@@ -80,7 +80,7 @@ final class PriceCalculator {
         ],
         'animation_tech'  => [
             'label' => 'Technische Animation', 'model' => 'per_minute',
-            'base_min' => 2500, 'base_max' => 3750,
+            'base_min' => 2000, 'base_max' => 3000,
             'has_konzept' => true, 'has_drohne' => false, 'has_voiceover' => true,
             'has_animation' => false, 'has_sound' => true, 'has_mehrsprachig' => true,
             'has_paket' => false, 'has_laenge' => true,
@@ -88,11 +88,11 @@ final class PriceCalculator {
         ],
     ];
 
-    /** Pauschalen statt Multiplikatoren – hält Spread konstant. */
+    /** Pauschalen –20 %. */
     private const PAKET = [
         'einzel'   => [ 'add_flat' => 0,    'drehtage' => 1, 'label' => 'Ein Hauptvideo' ],
-        'paket'    => [ 'add_flat' => 750,  'drehtage' => 2, 'label' => 'Hauptvideo + Kurzvideos für Social Media' ],
-        'kampagne' => [ 'add_flat' => 1500, 'drehtage' => 3, 'label' => 'Komplette Kampagne (Hauptvideo + Kurzvideos + Bonus-Material)' ],
+        'paket'    => [ 'add_flat' => 600,  'drehtage' => 2, 'label' => 'Hauptvideo + Kurzvideos für Social Media' ],
+        'kampagne' => [ 'add_flat' => 1200, 'drehtage' => 3, 'label' => 'Komplette Kampagne (Hauptvideo + Kurzvideos + Bonus-Material)' ],
     ];
 
     private const LAENGE = [
@@ -102,12 +102,13 @@ final class PriceCalculator {
         'extra_long' => [ 'mult' => 1.25, 'minutes' => 4.5,  'label' => '4–5 Min.' ],
     ];
 
+    /** Feature-Preise –20 %. */
     private const FEATURES = [
-        'voiceover'    => [ 'price' => 400 ],
-        'animation'    => [ 'price' => 250 ],   // war 450 – Recruiting fliegt raus, daher günstiger
-        'drohne'       => [ 'price_per_day' => 200 ],
-        'sound'        => [ 'price_per_min' => 250 ],
-        'mehrsprachig' => [ 'price' => 390 ],
+        'voiceover'    => [ 'price' => 320 ],
+        'animation'    => [ 'price' => 200 ],
+        'drohne'       => [ 'price_per_day' => 160 ],
+        'sound'        => [ 'price_per_min' => 200 ],
+        'mehrsprachig' => [ 'price' => 310 ],
     ];
 
     private const EXPRESS_MULT = 0.20;

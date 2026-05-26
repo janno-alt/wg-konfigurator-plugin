@@ -124,6 +124,8 @@ TEXT;
         $laenge_label = $quiz['video_laenge']
             ? \WG\Konfigurator\Services\PriceCalculator::length_label( (string) $quiz['video_laenge'] )
             : '60–90 Sekunden';
+        $goal_label   = \WG\Konfigurator\Services\Recommender::goal_label( (string) ( $quiz['goal']   ?? '' ) );
+        $budget_label = \WG\Konfigurator\Services\Recommender::budget_label( (string) ( $quiz['budget'] ?? 'unknown' ) );
 
         $feature_labels = \WG\Konfigurator\Services\PriceCalculator::feature_labels(
             (array) ( $quiz['features'] ?? [] )
@@ -132,16 +134,21 @@ TEXT;
             ? implode( ', ', $feature_labels )
             : '(keine zusätzlichen Features gewählt – Standard: Untertitel + lizenzierte Musik immer inklusive)';
 
+        $rec_reasoning = (string) ( $quiz['recommendation_reasoning'] ?? '' );
+
         $context_str = '';
         foreach ( [
-            'Video-Typ'         => $type_label,
-            'Output-Paket'      => $paket_label,
-            'Video-Länge'       => $laenge_label,
-            'Gewählte Features' => $features_text,
-            'Zeitrahmen'        => (string) ( $quiz['zeitrahmen']  ?? '' ),
-            'Branche'           => (string) ( $quiz['branche']     ?? '' ),
-            'Website'           => (string) ( $quiz['website']     ?? '' ),
-            'Kunden-Ziel'       => (string) ( $quiz['ziel']        ?? '(kein Freitext)' ),
+            'KUNDEN-ZIEL'             => $goal_label,
+            'BUDGET-RAHMEN'           => $budget_label,
+            'EMPFOHLENER VIDEO-TYP'   => $type_label,
+            'EMPFEHLUNGS-BEGRÜNDUNG (Plugin-Auto)' => $rec_reasoning,
+            'Empfohlenes Output-Paket'=> $paket_label,
+            'Empfohlene Länge'        => $laenge_label,
+            'Empfohlene Features'     => $features_text,
+            'Zeitrahmen'              => (string) ( $quiz['zeitrahmen']  ?? '' ),
+            'Branche'                 => (string) ( $quiz['branche']     ?? '' ),
+            'Website'                 => (string) ( $quiz['website']     ?? '' ),
+            'Freitext-Hinweis Kunde'  => (string) ( $quiz['ziel']        ?? '(kein Freitext)' ),
         ] as $k => $v ) {
             $context_str .= "- {$k}: {$v}\n";
         }
@@ -166,6 +173,26 @@ Felder:
    Klar benannt: WAS soll das Video bei WEM auslösen?
    Beispiel: "Pflegekräfte in Sachsen-Anhalt sehen sich in deinem Team wieder
    und melden sich aktiv für ein Kennenlern-Gespräch."
+
+1b. "typ_empfehlung_begruendung" (3–5 Sätze) — NEU IN v0.9:
+   Warum genau dieser Video-Typ für DIESES KUNDEN-ZIEL und DIESE BRANCHE
+   die richtige Wahl ist. Die Plugin-Auto-Begründung ist generisch — du
+   personalisierst sie auf die Branche, Ziel und ggf. Website-Inhalte.
+   Beispiel: "Für eure Pflegedienstleistung in Sachsen-Anhalt empfehlen wir
+   einen Imagefilm in 2-3-Min.-Form: Pflege ist ein Vertrauens-Markt, in dem
+   eure Werte und Persönlichkeit am ehesten überzeugen. Die längere Form
+   gibt Raum, drei konkrete Mitarbeiter:innen zu zeigen — die wahre Differenzierung
+   gegenüber Wettbewerbern, die nur Werbe-Slogans liefern."
+
+1c. "marketing_strategie" (3–5 Sätze) — NEU IN v0.9:
+   Wie sich dieses Video in eine ganze Marketing-Strategie einbettet.
+   Konkrete Hebel: WO wird es eingesetzt? Welche Kanäle? Welche
+   Folge-Maßnahmen sind sinnvoll? Wie misst man Erfolg?
+   Beispiel: "Spielt den Imagefilm auf eurer Karriere-Seite als Hero-Video aus,
+   schneidet ihn zu 3 LinkedIn-Posts für die nächsten Monate und verwendet
+   einzelne Statements als Hooks für gezielte Instagram-Ads in einem
+   30-km-Radius um Magdeburg. Messt Bewerbungen pro Quelle — der Spot wird
+   sich nach ca. 4–6 Wochen rechnen."
 
 2. "unternehmens_analyse" (3–5 Sätze):
    Was macht dieses Unternehmen konkret? Was sind die Stärken, die im
@@ -232,30 +259,34 @@ TEXT;
         return [
             'type'       => 'object',
             'properties' => [
-                'wirkungs_hypothese'        => [ 'type' => 'string' ],
-                'unternehmens_analyse'      => [ 'type' => 'string' ],
-                'video_botschaften'         => [
+                'wirkungs_hypothese'           => [ 'type' => 'string' ],
+                'typ_empfehlung_begruendung'   => [ 'type' => 'string' ],  // NEU v0.9
+                'unternehmens_analyse'         => [ 'type' => 'string' ],
+                'video_botschaften'            => [
                     'type'  => 'array',
                     'items' => [ 'type' => 'string' ],
                 ],
-                'empfohlene_protagonisten'  => [
+                'marketing_strategie'          => [ 'type' => 'string' ],  // NEU v0.9
+                'empfohlene_protagonisten'     => [
                     'type'  => 'array',
                     'items' => [ 'type' => 'string' ],
                 ],
-                'empfohlene_locations'      => [
+                'empfohlene_locations'         => [
                     'type'  => 'array',
                     'items' => [ 'type' => 'string' ],
                 ],
-                'vorbereitungs_checkliste'  => [
+                'vorbereitungs_checkliste'     => [
                     'type'  => 'array',
                     'items' => [ 'type' => 'string' ],
                 ],
-                'naechste_schritte'         => [ 'type' => 'string' ],
+                'naechste_schritte'            => [ 'type' => 'string' ],
             ],
             'required'   => [
                 'wirkungs_hypothese',
+                'typ_empfehlung_begruendung',
                 'unternehmens_analyse',
                 'video_botschaften',
+                'marketing_strategie',
                 'empfohlene_protagonisten',
                 'empfohlene_locations',
                 'vorbereitungs_checkliste',

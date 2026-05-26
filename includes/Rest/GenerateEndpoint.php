@@ -14,6 +14,7 @@ use WG\Konfigurator\Services\GeminiClient;
 use WG\Konfigurator\Services\Mailer;
 use WG\Konfigurator\Services\PdfGenerator;
 use WG\Konfigurator\Services\PriceCalculator;
+use WG\Konfigurator\Services\Recommender;
 use WG\Konfigurator\Services\WebhookSender;
 use WG\Konfigurator\Services\WebsiteScraper;
 
@@ -111,15 +112,29 @@ final class GenerateEndpoint {
         }
         $website = $raw_website !== '' ? esc_url_raw( $raw_website ) : '';
 
+        // v0.9: Goal + Budget kommen vom Client. Wir berechnen die Recommendation
+        // server-seitig (Source of Truth) und überschreiben damit ggf. die
+        // Client-Werte (falls die JS-Logik mal aus dem Sync läuft).
+        $goal   = sanitize_text_field( (string) ( $quiz['goal']   ?? '' ) );
+        $budget = sanitize_text_field( (string) ( $quiz['budget'] ?? 'unknown' ) );
+
+        $rec = $goal !== '' ? Recommender::recommend( $goal, $budget ) : null;
+
         $quiz = [
-            'video_typ'    => sanitize_text_field( (string) ( $quiz['video_typ']    ?? '' ) ),
-            'output_paket' => sanitize_text_field( (string) ( $quiz['output_paket'] ?? '' ) ),
-            'video_laenge' => sanitize_text_field( (string) ( $quiz['video_laenge'] ?? 'medium' ) ),
-            'features'     => $features,
-            'zeitrahmen'   => sanitize_text_field( (string) ( $quiz['zeitrahmen']   ?? '' ) ),
-            'branche'      => sanitize_text_field( (string) ( $quiz['branche']      ?? '' ) ),
+            // Roh-Antworten
+            'goal'         => $goal,
+            'budget'       => $budget,
+            'zeitrahmen'   => sanitize_text_field( (string) ( $quiz['zeitrahmen'] ?? '' ) ),
+            'branche'      => sanitize_text_field( (string) ( $quiz['branche']    ?? '' ) ),
             'website'      => $website,
-            'ziel'         => sanitize_textarea_field( (string) ( $quiz['ziel']      ?? '' ) ),
+            'ziel'         => sanitize_textarea_field( (string) ( $quiz['ziel']    ?? '' ) ),
+            // Recommendation-Output (Source of Truth = Server)
+            'video_typ'    => $rec ? $rec['video_typ']    : sanitize_text_field( (string) ( $quiz['video_typ']    ?? 'werbespot' ) ),
+            'output_paket' => $rec ? $rec['output_paket'] : sanitize_text_field( (string) ( $quiz['output_paket'] ?? '' ) ),
+            'video_laenge' => $rec ? $rec['video_laenge'] : sanitize_text_field( (string) ( $quiz['video_laenge'] ?? 'medium' ) ),
+            'features'     => $rec ? $rec['features']     : $features,
+            // Reasoning für KI-Prompt
+            'recommendation_reasoning' => $rec['reasoning_short'] ?? '',
         ];
 
         $tracking = [
@@ -285,19 +300,21 @@ final class GenerateEndpoint {
         $branche = $quiz['branche'] ?: 'deinem Unternehmen';
         return [
             '_no_website' => true,
-            'wirkungs_hypothese'       => sprintf(
+            'wirkungs_hypothese'         => sprintf(
                 'Für ein wirklich passgenaues Konzept brauchen wir Einblick in %s. Lass uns 30 Minuten reden.',
                 $branche
             ),
-            'unternehmens_analyse'     => 'Eine individuelle Analyse konnten wir hier nicht durchführen, weil uns keine Website-Information vorlag (weder im Feld Website noch über die E-Mail-Domain). Wir würden uns nicht erlauben, an dieser Stelle Hypothesen über dein Geschäft zu erfinden – das wäre weder ehrlich noch hilfreich.',
-            'video_botschaften'        => [
+            'typ_empfehlung_begruendung' => '',
+            'unternehmens_analyse'       => 'Eine individuelle Analyse konnten wir hier nicht durchführen, weil uns keine Website-Information vorlag (weder im Feld Website noch über die E-Mail-Domain). Wir würden uns nicht erlauben, an dieser Stelle Hypothesen über dein Geschäft zu erfinden – das wäre weder ehrlich noch hilfreich.',
+            'video_botschaften'          => [
                 'Buche einen 30-Min-Termin – dann hörst du eine konkrete Einschätzung statt KI-Vermutungen.',
                 'Schicke uns kurz einen Link zu eurer Website oder eurem Profil per Mail – wir liefern dir das Konzept dann persönlich nach.',
             ],
-            'empfohlene_protagonisten' => [],
-            'empfohlene_locations'     => [],
-            'vorbereitungs_checkliste' => [],
-            'naechste_schritte'        => 'Buche dir direkt einen unverbindlichen 30-Minuten-Slot – dort definieren wir gemeinsam das Konzept und du bekommst eine konkrete Einschätzung.',
+            'marketing_strategie'        => '',
+            'empfohlene_protagonisten'   => [],
+            'empfohlene_locations'       => [],
+            'vorbereitungs_checkliste'   => [],
+            'naechste_schritte'          => 'Buche dir direkt einen unverbindlichen 30-Minuten-Slot – dort definieren wir gemeinsam das Konzept und du bekommst eine konkrete Einschätzung.',
         ];
     }
 

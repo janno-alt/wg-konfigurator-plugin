@@ -184,7 +184,30 @@ $fmt_eur = static function ( $n ): string {
     </div>
 </div>
 
-<!-- ============== SEITE 3: Unternehmens-Analyse + Botschaften ============== -->
+<!-- ============== SEITE 3 NEU v0.9: Warum dieser Video-Typ ============== -->
+<?php if ( empty( $concept['_no_website'] ) && ! empty( $concept['typ_empfehlung_begruendung'] ) ) : ?>
+<div class="page">
+    <span class="accent-bar"></span>
+    <h2>Warum dieser Video-Typ?</h2>
+    <p style="line-height:1.7;">
+        <?php echo nl2br( esc_html( (string) $concept['typ_empfehlung_begruendung'] ) ); ?>
+    </p>
+
+    <?php if ( ! empty( $concept['marketing_strategie'] ) ) : ?>
+        <h3 style="margin-top:24pt;">So fügt sich das Video in deine Marketing-Strategie ein</h3>
+        <p style="line-height:1.7;">
+            <?php echo nl2br( esc_html( (string) $concept['marketing_strategie'] ) ); ?>
+        </p>
+    <?php endif; ?>
+
+    <div class="footer">
+        Konzept <?php echo esc_html( $today ); ?>
+        <span class="right">Seite 3</span>
+    </div>
+</div>
+<?php endif; ?>
+
+<!-- ============== SEITE 4: Unternehmens-Analyse + Botschaften ============== -->
 <div class="page">
     <span class="accent-bar"></span>
 

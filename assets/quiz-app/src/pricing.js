@@ -12,14 +12,14 @@
    - lengths[]   Welche Längen sind erlaubt (leer = alle)
    ============================================================ */
 
-const KONZEPT_PAUSCHALE = 1000;
+const KONZEPT_PAUSCHALE = 800;
 
 const VIDEO_TYPES = {
-  // ---------- Klassische Videoproduktion (max ~50% Spread) ----------
+  // ---------- Klassische Videoproduktion (v0.9.0: Preise -20%) ----------
   imagefilm: {
     label: 'Imagefilm',
     model: 'flat',
-    base_min: 2000, base_max: 3000,
+    base_min: 1600, base_max: 2400,
     has_konzept: true, has_drohne: true, has_voiceover: true, has_animation: true, has_sound: true, has_mehrsprachig: true,
     has_paket: true,   has_laenge: true,
     lengths: ['medium', 'long', 'extra_long'],
@@ -27,7 +27,7 @@ const VIDEO_TYPES = {
   werbespot: {
     label: 'Werbespot',
     model: 'flat',
-    base_min: 2500, base_max: 3750,
+    base_min: 2000, base_max: 3000,
     has_konzept: true, has_drohne: true, has_voiceover: true, has_animation: true, has_sound: true, has_mehrsprachig: true,
     has_paket: true,   has_laenge: true,
     lengths: ['short', 'medium', 'long'],
@@ -35,7 +35,7 @@ const VIDEO_TYPES = {
   recruiting: {
     label: 'Recruiting-Video',
     model: 'flat',
-    base_min: 2500, base_max: 3750,
+    base_min: 2000, base_max: 3000,
     has_konzept: true, has_drohne: true, has_voiceover: true,
     has_animation: false,   // Captions sind Standard bei Recruiting (Social)
     has_sound: true, has_mehrsprachig: true,
@@ -62,7 +62,7 @@ const VIDEO_TYPES = {
   erklaer_real: {
     label: 'Erklärvideo (mit Real-Material)',
     model: 'per_minute',
-    base_min: 1000, base_max: 1500,
+    base_min: 800, base_max: 1200,
     has_konzept: true, has_drohne: true, has_voiceover: true, has_animation: true, has_sound: true, has_mehrsprachig: true,
     has_paket: false,  has_laenge: true,
     lengths: ['medium', 'long', 'extra_long'],
@@ -70,7 +70,7 @@ const VIDEO_TYPES = {
   erklaer_anim: {
     label: 'Erklärvideo (Animation)',
     model: 'per_minute',
-    base_min: 1500, base_max: 2250,
+    base_min: 1200, base_max: 1800,
     has_konzept: true, has_drohne: false, has_voiceover: true, has_animation: false, has_sound: true, has_mehrsprachig: true,
     has_paket: false,  has_laenge: true,
     lengths: ['short', 'medium', 'long', 'extra_long'],
@@ -78,7 +78,7 @@ const VIDEO_TYPES = {
   animation_3d: {
     label: '3D-Animation',
     model: 'per_minute',
-    base_min: 2000, base_max: 3000,
+    base_min: 1600, base_max: 2400,
     has_konzept: true, has_drohne: false, has_voiceover: true, has_animation: false, has_sound: true, has_mehrsprachig: true,
     has_paket: false,  has_laenge: true,
     lengths: ['short', 'medium', 'long'],
@@ -86,18 +86,18 @@ const VIDEO_TYPES = {
   animation_tech: {
     label: 'Technische Animation',
     model: 'per_minute',
-    base_min: 2500, base_max: 3750,
+    base_min: 2000, base_max: 3000,
     has_konzept: true, has_drohne: false, has_voiceover: true, has_animation: false, has_sound: true, has_mehrsprachig: true,
     has_paket: false,  has_laenge: true,
     lengths: ['medium', 'long', 'extra_long'],
   },
 };
 
-/* Output-Paket: Pauschale statt Multiplikator (hält Spread konstant) */
+/* Output-Paket-Pauschalen –20 %. */
 const PAKET = {
   einzel:   { add_flat: 0,    drehtage: 1, label: 'Ein Hauptvideo' },
-  paket:    { add_flat: 750,  drehtage: 2, label: 'Hauptvideo + Kurzvideos für Social Media' },
-  kampagne: { add_flat: 1500, drehtage: 3, label: 'Komplette Kampagne (Hauptvideo + Kurzvideos + Bonus-Material)' },
+  paket:    { add_flat: 600,  drehtage: 2, label: 'Hauptvideo + Kurzvideos für Social Media' },
+  kampagne: { add_flat: 1200, drehtage: 3, label: 'Komplette Kampagne (Hauptvideo + Kurzvideos + Bonus-Material)' },
 };
 
 const LAENGE = {
@@ -108,11 +108,11 @@ const LAENGE = {
 };
 
 const FEATURES = {
-  voiceover:    { price: 400, label: 'Voiceover / Sprecher:in' },
-  animation:    { price: 250, label: 'Text-Einblendungen (Namen, Zitate)' },
-  drohne:       { price_per_day: 200, label: 'Drohnen-Aufnahmen' },
-  sound:        { price_per_min: 250, label: 'Sound Design (Atmosphäre, Effekte)' },
-  mehrsprachig: { price: 390, label: 'Zweite Sprachfassung' },
+  voiceover:    { price: 320, label: 'Voiceover / Sprecher:in' },
+  animation:    { price: 200, label: 'Text-Einblendungen (Namen, Zitate)' },
+  drohne:       { price_per_day: 160, label: 'Drohnen-Aufnahmen' },
+  sound:        { price_per_min: 200, label: 'Sound Design (Atmosphäre, Effekte)' },
+  mehrsprachig: { price: 310, label: 'Zweite Sprachfassung' },
 };
 
 const EXPRESS_MULT = 0.20;
