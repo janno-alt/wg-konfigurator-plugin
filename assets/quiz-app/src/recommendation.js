@@ -1,8 +1,8 @@
 /* ============================================================
-   Recommendation-Engine
-   Übersetzt Ziel + Budget + Branche → empfohlener Video-Typ + Konfig.
-
-   MUSS synchron mit includes/Services/Recommender.php gehalten werden.
+   Recommendation-Engine v0.10
+   Input: Ziel + Ausspiel-Kanäle (Multi) + Branche
+   Output: empfohlener Video-Typ + Default-Konfig
+   Budget-Step entfernt — er führte zu paradoxen Empfehlungen.
    ============================================================ */
 
 export const GOALS = [
@@ -39,7 +39,7 @@ export const GOALS = [
   {
     id: 'technical',
     label: 'Technisches Produkt visualisieren',
-    hint: 'Maschinen, Bauteile, Prozesse zeigen — auch was im Realbild unsichtbar ist',
+    hint: 'Maschinen, Bauteile, Prozesse zeigen — auch was unsichtbar ist',
     icon: '⚙️',
   },
   {
@@ -50,159 +50,134 @@ export const GOALS = [
   },
 ];
 
-export const BUDGETS = [
-  { id: 'low',     label: 'Bis 2.500 €',           hint: 'Schlanker Einstieg', icon: '💶' },
-  { id: 'medium',  label: '2.500 – 5.000 €',       hint: 'Standard-Projekte',  icon: '💶💶' },
-  { id: 'high',    label: '5.000 – 10.000 €',      hint: 'Mehr Reichweite, mehr Output', icon: '💶💶💶' },
-  { id: 'premium', label: 'Über 10.000 €',         hint: 'Komplette Kampagne mit allem Drum und Dran', icon: '💎' },
-  { id: 'unknown', label: 'Weiß noch nicht',       hint: 'Mach uns gerne einen Vorschlag', icon: '🤔' },
+export const CHANNELS = [
+  { id: 'website', label: 'Eigene Website / Landingpage',                     icon: '🌐' },
+  { id: 'youtube', label: 'YouTube',                                           icon: '▶️' },
+  { id: 'social',  label: 'Social Media (Instagram, TikTok, LinkedIn)',        icon: '📱' },
+  { id: 'ads',     label: 'Bezahlte Anzeigen (Google, Meta, LinkedIn Ads)',    icon: '🎯' },
+  { id: 'messe',   label: 'Messe / Display vor Ort',                           icon: '🖥️' },
+  { id: 'tv',      label: 'TV / Streaming-Werbung',                            icon: '📺' },
 ];
 
+/* Welche Video-Typen passen zum Ziel? Erste Position = primäre Empfehlung. */
+export const GOAL_TO_TYPES = {
+  awareness:  ['werbespot', 'imagefilm', 'reel_paket'],
+  brand:      ['imagefilm', 'werbespot'],
+  recruiting: ['recruiting'],
+  social:     ['reel_paket', 'werbespot'],
+  explain:    ['erklaer_real', 'erklaer_anim', 'animation_3d'],
+  technical:  ['animation_tech', 'animation_3d', 'erklaer_anim'],
+  sales:      ['werbespot', 'erklaer_anim', 'imagefilm'],
+};
+
 /**
- * Erzeugt die Empfehlung aus Ziel + Budget.
+ * Erzeugt die Empfehlung aus Ziel + Kanälen.
  *
  * @param {string} goal
- * @param {string} budget
+ * @param {string[]} channels  Multi-Select Array (z. B. ['website', 'social'])
  * @returns {{video_typ, output_paket, video_laenge, features, reasoning_short}}
  */
-export function recommend(goal, budget) {
-  const isLow     = budget === 'low';
-  const isMedium  = budget === 'medium' || budget === 'unknown';
-  const isHigh    = budget === 'high';
-  const isPremium = budget === 'premium';
+export function recommend(goal, channels = []) {
+  const hasSocial  = channels.includes('social');
+  const hasTv      = channels.includes('tv');
+  const hasMesse   = channels.includes('messe');
+  const hasAds     = channels.includes('ads');
+  const hasWebsite = channels.includes('website') || channels.includes('youtube');
 
-  // Default-Fallback
+  // Default
   let rec = {
     video_typ: 'werbespot',
     output_paket: 'einzel',
     video_laenge: 'medium',
-    features: [],
+    features: ['voiceover'],
     reasoning_short: '',
   };
 
   switch (goal) {
     case 'awareness':
-      if (isLow) {
-        rec = {
-          video_typ: 'reel_paket', output_paket: '', video_laenge: '', features: ['drohne'],
-          reasoning_short: 'Bei schmalem Budget bekommst du mit dem Reel-Paket maximale Reichweite – 12 Kurzvideos für 3 Monate Social-Sichtbarkeit.',
-        };
-      } else if (isPremium) {
-        rec = {
-          video_typ: 'werbespot', output_paket: 'kampagne', video_laenge: 'medium', features: ['voiceover', 'sound', 'drohne'],
-          reasoning_short: 'Eine komplette Kampagne: Hauptspot + Kurzvideos + Bonus-Material. Damit bespielst du alle Kanäle mit einem Drehtag.',
-        };
-      } else {
-        rec = {
-          video_typ: 'werbespot', output_paket: 'paket', video_laenge: 'medium', features: ['voiceover', 'sound'],
-          reasoning_short: 'Werbespot mit Kurzvideos für Social Media – klassische Werbeflächen + organische Reichweite in einem Aufwasch.',
-        };
-      }
+      rec = {
+        video_typ: 'werbespot',
+        output_paket: hasSocial || hasAds ? 'paket' : 'einzel',
+        video_laenge: hasMesse ? 'short' : 'medium',
+        features: hasMesse ? ['animation', 'sound'] : ['voiceover', 'sound'],
+        reasoning_short: hasSocial
+          ? 'Werbespot + Kurzvideos für Social Media: klassische Werbeflächen plus organische Reichweite.'
+          : 'Klassischer Werbespot, der deine Hauptbotschaft auf den Punkt bringt.',
+      };
       break;
 
     case 'brand':
-      if (isLow) {
-        rec = {
-          video_typ: 'imagefilm', output_paket: 'einzel', video_laenge: 'medium', features: ['voiceover'],
-          reasoning_short: 'Ein kompakter Imagefilm (60–90 Sek.) für deine Website – Vertrauen aufbauen, ohne dein Budget zu sprengen.',
-        };
-      } else if (isPremium) {
-        rec = {
-          video_typ: 'imagefilm', output_paket: 'kampagne', video_laenge: 'long', features: ['voiceover', 'sound', 'drohne'],
-          reasoning_short: 'Ein vollwertiger 2–3-Min.-Imagefilm + Social-Cuts + Behind-the-Scenes. Genug Raum, eure Werte und Persönlichkeit zu zeigen.',
-        };
-      } else {
-        rec = {
-          video_typ: 'imagefilm', output_paket: 'einzel', video_laenge: 'long', features: ['voiceover', 'sound'],
-          reasoning_short: 'Ein Imagefilm in der bewährten 2–3-Min.-Form gibt Raum für Story und Persönlichkeit – wirkt langfristig auf Vertrauen.',
-        };
-      }
+      rec = {
+        video_typ: 'imagefilm',
+        output_paket: hasSocial ? 'paket' : 'einzel',
+        video_laenge: hasMesse || hasSocial ? 'medium' : 'long',
+        features: hasMesse ? ['sound', 'animation'] : ['voiceover', 'sound'],
+        reasoning_short: 'Ein Imagefilm baut Vertrauen auf — Raum für Werte und Persönlichkeit.',
+      };
       break;
 
     case 'recruiting':
-      if (isLow) {
-        rec = {
-          video_typ: 'recruiting', output_paket: 'einzel', video_laenge: 'medium', features: [],
-          reasoning_short: 'Ein fokussiertes Recruiting-Video für deine Karriere-Seite und Stellenanzeigen – schlank und auf den Punkt.',
-        };
-      } else if (isPremium) {
-        rec = {
-          video_typ: 'recruiting', output_paket: 'kampagne', video_laenge: 'long', features: ['voiceover', 'drohne'],
-          reasoning_short: 'Vollkampagne: Hauptvideo + Kurzvideos für Social Recruiting + Bonus-Material. Maximaler Bewerber-Funnel.',
-        };
-      } else {
-        rec = {
-          video_typ: 'recruiting', output_paket: 'paket', video_laenge: 'medium', features: ['voiceover'],
-          reasoning_short: 'Recruiting-Video + Kurzvideos für Social Media: Authentische Einblicke ins Team plus Hooks für LinkedIn und Instagram.',
-        };
-      }
+      rec = {
+        video_typ: 'recruiting',
+        output_paket: hasSocial ? 'paket' : 'einzel',
+        video_laenge: 'medium',
+        features: ['voiceover'],
+        reasoning_short: hasSocial
+          ? 'Recruiting-Video + Kurzvideos: Hauptvideo für die Karriere-Seite, kurze Hooks für LinkedIn und Instagram.'
+          : 'Fokussiertes Recruiting-Video für deine Karriere-Seite und Stellenanzeigen.',
+      };
       break;
 
     case 'social':
       rec = {
-        video_typ: 'reel_paket', output_paket: '', video_laenge: '',
-        features: isPremium || isHigh ? ['drohne'] : [],
-        reasoning_short: '12 Kurzvideos für 30–60 Sek. in einem halben Drehtag – konstanter Content für Instagram, TikTok und LinkedIn über 3 Monate.',
+        video_typ: 'reel_paket',
+        output_paket: '',
+        video_laenge: '',
+        features: [],
+        reasoning_short: '12 Kurzvideos in einem ½ Drehtag — konstante Sichtbarkeit auf Social Media über 3 Monate.',
       };
       break;
 
     case 'explain':
-      if (isLow) {
-        rec = {
-          video_typ: 'erklaer_anim', output_paket: '', video_laenge: 'short', features: ['voiceover'],
-          reasoning_short: 'Eine kurze animierte Erklärung (15–30 Sek.) ist günstig produziert und perfekt für Social-Hooks.',
-        };
-      } else if (isPremium) {
-        rec = {
-          video_typ: 'erklaer_real', output_paket: '', video_laenge: 'extra_long', features: ['voiceover', 'animation', 'sound'],
-          reasoning_short: 'Längeres Erklärvideo mit Real-Material: Glaubwürdiger als reine Animation und genug Zeit, das Thema sauber aufzubauen.',
-        };
-      } else {
-        rec = {
-          video_typ: 'erklaer_real', output_paket: '', video_laenge: 'long', features: ['voiceover'],
-          reasoning_short: 'Erklärvideo mit echtem Material (2–3 Min.): Glaubwürdiger als reine Animation und ausreichend Zeit, das Thema verständlich aufzubauen.',
-        };
-      }
+      rec = {
+        video_typ: 'erklaer_real',
+        output_paket: '',
+        video_laenge: hasSocial ? 'medium' : 'long',
+        features: ['voiceover'],
+        reasoning_short: 'Erklärvideo mit echtem Material wirkt glaubwürdiger als reine Animation.',
+      };
       break;
 
     case 'technical':
-      if (isPremium) {
-        rec = {
-          video_typ: 'animation_tech', output_paket: '', video_laenge: 'long', features: ['voiceover', 'sound'],
-          reasoning_short: 'Technische Animation visualisiert, was Realbild nicht zeigt – Schnitte durchs Bauteil, Materialflüsse, unsichtbare Vorgänge.',
-        };
-      } else if (isHigh) {
-        rec = {
-          video_typ: 'animation_tech', output_paket: '', video_laenge: 'medium', features: ['voiceover'],
-          reasoning_short: 'Eine fokussierte technische Animation (60–90 Sek.) – ideal für Produkt-Detail-Seiten und Messe-Loops.',
-        };
-      } else {
-        rec = {
-          video_typ: 'animation_3d', output_paket: '', video_laenge: 'medium', features: ['voiceover'],
-          reasoning_short: 'Eine 3D-Produkt-Animation in 60–90 Sek. zeigt dein Produkt von allen Seiten – schon mit moderatem Budget realistisch.',
-        };
-      }
+      rec = {
+        video_typ: 'animation_tech',
+        output_paket: '',
+        video_laenge: hasMesse ? 'medium' : 'long',
+        features: hasMesse ? ['sound'] : ['voiceover', 'sound'],
+        reasoning_short: 'Technische Animation zeigt, was Realbild nicht zeigen kann — Schnitte durchs Bauteil, Materialflüsse, unsichtbare Vorgänge.',
+      };
       break;
 
     case 'sales':
-      if (isLow) {
-        rec = {
-          video_typ: 'werbespot', output_paket: 'einzel', video_laenge: 'medium', features: ['voiceover'],
-          reasoning_short: 'Ein klassischer 60-Sek.-Werbespot konvertiert – einfache Botschaft, klarer Call-to-Action.',
-        };
-      } else if (isPremium) {
-        rec = {
-          video_typ: 'werbespot', output_paket: 'kampagne', video_laenge: 'medium', features: ['voiceover', 'sound', 'drohne'],
-          reasoning_short: 'Komplette Performance-Kampagne: Hauptspot + Kurzvideos + A/B-Material für Meta-Ads, YouTube und LinkedIn.',
-        };
-      } else {
-        rec = {
-          video_typ: 'werbespot', output_paket: 'paket', video_laenge: 'medium', features: ['voiceover', 'sound'],
-          reasoning_short: 'Werbespot + Kurzvideos für Performance-Anzeigen: Hauptvideo für die Landingpage, Social-Cuts für Meta- und YouTube-Ads.',
-        };
-      }
+      rec = {
+        video_typ: 'werbespot',
+        output_paket: hasAds || hasSocial ? 'paket' : 'einzel',
+        video_laenge: 'medium',
+        features: ['voiceover'],
+        reasoning_short: hasAds
+          ? 'Werbespot + Kurzvideos: Hauptvideo für die Landingpage, Social-Cuts für Meta- und YouTube-Ads.'
+          : 'Klassischer Werbespot mit klarem Call-to-Action — direkt für die Landingpage.',
+      };
       break;
   }
 
   return rec;
+}
+
+export function goalLabel(id) {
+  return (GOALS.find((g) => g.id === id) || {}).label || id;
+}
+
+export function channelLabel(id) {
+  return (CHANNELS.find((c) => c.id === id) || {}).label || id;
 }

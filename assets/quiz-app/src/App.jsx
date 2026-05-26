@@ -6,9 +6,7 @@ import Loading from './Loading.jsx';
 import PriceSidebar from './PriceSidebar.jsx';
 import { recommend } from './recommendation.js';
 
-/* Phasen: 'intro' → 'quiz' → 'loading' → 'result' */
-
-const STEPS = ['goal', 'branche', 'budget', 'zeitrahmen', 'kontext'];
+const STEPS = ['goal', 'branche', 'channels', 'zeitrahmen', 'configure', 'kontext'];
 
 export default function App({ theme = 'dark' }) {
   const config = window.WG_KONFIGURATOR || {};
@@ -16,13 +14,23 @@ export default function App({ theme = 'dark' }) {
   const [sessionId, setSessionId] = useState('');
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState({
-    goal: '',           // NEU: Ziel des Kunden
-    budget: '',         // NEU: Budget-Range
+    // Quiz-Inputs
+    goal: '',
+    channels: [],         // Multi-Select
     branche: '',
     zeitrahmen: '',
     website: '',
-    ziel: '',           // Freitext-Ziel (zusätzlich zu goal)
+    ziel: '',
+    // Konfig-Werte (vom Recommender initial gesetzt, vom User im Configure-Step anpassbar)
+    video_typ: '',
+    output_paket: '',
+    video_laenge: 'medium',
+    features: [],
   });
+  // Track ob der User im Configure-Step manuell etwas geändert hat —
+  // dann überschreibt die Recommendation seine Auswahl nicht mehr.
+  const [userOverride, setUserOverride] = useState(false);
+
   const [lead, setLead] = useState({
     name: '',
     email: '',
@@ -34,29 +42,42 @@ export default function App({ theme = 'dark' }) {
   const [result, setResult]         = useState(null);
   const [error, setError]           = useState('');
 
-  // Recommendation wird live aus goal + budget berechnet
+  // Recommendation live aus goal + channels berechnen
   const recommendation = useMemo(() => {
     if (!answers.goal) return null;
-    return recommend(answers.goal, answers.budget || 'unknown');
-  }, [answers.goal, answers.budget]);
+    return recommend(answers.goal, answers.channels || []);
+  }, [answers.goal, answers.channels]);
 
-  // Quiz-State, der an pricing.js übergeben wird, inkl. errechnete Empfehlung
-  const effectiveAnswers = useMemo(() => {
-    if (!recommendation) return answers;
-    return {
-      ...answers,
+  // Wenn sich goal oder channels ändern → answers automatisch mit Empfehlung füllen
+  // (außer der User hat im Configure-Step bereits manuell überschrieben).
+  useEffect(() => {
+    if (!recommendation) return;
+    if (userOverride) return;
+    setAnswers((a) => ({
+      ...a,
       video_typ:    recommendation.video_typ,
       output_paket: recommendation.output_paket || '',
       video_laenge: recommendation.video_laenge || 'medium',
       features:     recommendation.features || [],
-    };
-  }, [answers, recommendation]);
+    }));
+  }, [recommendation, userOverride]);
+
+  // Wenn der User goal oder channels ändert → User-Override resetten,
+  // damit die neue Empfehlung wieder greift.
+  useEffect(() => {
+    setUserOverride(false);
+  }, [answers.goal, JSON.stringify(answers.channels)]);
 
   const total = STEPS.length;
   const progress = Math.round((step / total) * 100);
 
   function next() { setStep((s) => Math.min(s + 1, total)); }
   function back() { setStep((s) => Math.max(0, s - 1)); }
+
+  function setConfigField(field, value) {
+    setUserOverride(true);
+    setAnswers((a) => ({ ...a, [field]: value }));
+  }
 
   /* ---------- Intro → Quiz ---------- */
   async function handleStart() {
@@ -90,7 +111,7 @@ export default function App({ theme = 'dark' }) {
     }
   }
 
-  /* ---------- Submit → Loading → Result ---------- */
+  /* ---------- Submit ---------- */
   async function submit() {
     setSubmitting(true);
     setPhase('loading');
@@ -110,9 +131,6 @@ export default function App({ theme = 'dark' }) {
 
       const normalizedWebsite = normalizeWebsite(answers.website);
 
-      // Wir schicken die Roh-Quiz-Antworten + die Recommendation ans Backend.
-      // Der Server berechnet seine eigene Empfehlung nochmal (Source of Truth)
-      // und gleicht sie ggf. ab.
       const response = await fetch(config.restUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': config.nonce },
@@ -121,11 +139,7 @@ export default function App({ theme = 'dark' }) {
           quiz: {
             ...answers,
             website: normalizedWebsite,
-            // Recommendation-Output direkt mitgeben für CRM
-            video_typ:    recommendation?.video_typ,
-            output_paket: recommendation?.output_paket || '',
-            video_laenge: recommendation?.video_laenge || 'medium',
-            features:     recommendation?.features || [],
+            user_override: userOverride,
           },
           tracking: config.tracking || {},
           session_id: sessionId,
@@ -143,8 +157,9 @@ export default function App({ theme = 'dark' }) {
         window.dataLayer.push({
           event: 'konfigurator_completed',
           goal: answers.goal,
-          budget: answers.budget,
-          video_typ: recommendation?.video_typ,
+          channels: answers.channels,
+          video_typ: answers.video_typ,
+          user_override: userOverride,
           preis_min: data.preis_min,
           preis_max: data.preis_max,
         });
@@ -157,29 +172,18 @@ export default function App({ theme = 'dark' }) {
     }
   }
 
-  /* ---------- Render je nach Phase ---------- */
+  /* ---------- Render ---------- */
 
   if (phase === 'intro') {
     return (
-      <Intro
-        lead={lead}
-        setLead={setLead}
-        onStart={handleStart}
-        starting={starting}
-        error={error}
-      />
+      <Intro lead={lead} setLead={setLead} onStart={handleStart} starting={starting} error={error} />
     );
   }
-
-  if (phase === 'loading') {
-    return <Loading />;
-  }
-
+  if (phase === 'loading') return <Loading />;
   if (phase === 'result' && result) {
     return <Result data={result} meetingUrl={config.meetingUrl} theme={theme} />;
   }
 
-  // phase === 'quiz'
   return (
     <div className={`wgk wgk--${theme}`}>
       <div className="wgk__progress">
@@ -193,8 +197,10 @@ export default function App({ theme = 'dark' }) {
             steps={STEPS}
             answers={answers}
             setAnswers={setAnswers}
+            setConfigField={setConfigField}
             lead={lead}
             recommendation={recommendation}
+            userOverride={userOverride}
             onNext={next}
             onBack={back}
             onSubmit={submit}
@@ -203,7 +209,7 @@ export default function App({ theme = 'dark' }) {
           />
         </div>
         <div className="wgk__layout-side">
-          <PriceSidebar answers={effectiveAnswers} recommendation={recommendation} />
+          <PriceSidebar answers={answers} recommendation={recommendation} />
         </div>
       </div>
     </div>

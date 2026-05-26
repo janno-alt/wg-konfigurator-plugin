@@ -112,28 +112,40 @@ final class GenerateEndpoint {
         }
         $website = $raw_website !== '' ? esc_url_raw( $raw_website ) : '';
 
-        // v0.9: Goal + Budget kommen vom Client. Wir berechnen die Recommendation
-        // server-seitig (Source of Truth) und überschreiben damit ggf. die
-        // Client-Werte (falls die JS-Logik mal aus dem Sync läuft).
-        $goal   = sanitize_text_field( (string) ( $quiz['goal']   ?? '' ) );
-        $budget = sanitize_text_field( (string) ( $quiz['budget'] ?? 'unknown' ) );
+        // v0.10: Goal + Channels (Multi) kommen vom Client. Wenn User_Override aktiv
+        // ist (User hat im Configure-Step manuell etwas geändert), nehmen wir die
+        // Client-Werte als Wahrheit. Sonst berechnen wir neu serverseitig.
+        $goal     = sanitize_text_field( (string) ( $quiz['goal'] ?? '' ) );
+        $channels = array_values( array_filter( array_map(
+            'sanitize_text_field',
+            array_map( 'strval', (array) ( $quiz['channels'] ?? [] ) )
+        ) ) );
+        $user_override = ! empty( $quiz['user_override'] );
 
-        $rec = $goal !== '' ? Recommender::recommend( $goal, $budget ) : null;
+        $rec = $goal !== '' ? Recommender::recommend( $goal, $channels ) : null;
 
         $quiz = [
             // Roh-Antworten
             'goal'         => $goal,
-            'budget'       => $budget,
+            'channels'     => $channels,
             'zeitrahmen'   => sanitize_text_field( (string) ( $quiz['zeitrahmen'] ?? '' ) ),
             'branche'      => sanitize_text_field( (string) ( $quiz['branche']    ?? '' ) ),
             'website'      => $website,
             'ziel'         => sanitize_textarea_field( (string) ( $quiz['ziel']    ?? '' ) ),
-            // Recommendation-Output (Source of Truth = Server)
-            'video_typ'    => $rec ? $rec['video_typ']    : sanitize_text_field( (string) ( $quiz['video_typ']    ?? 'werbespot' ) ),
-            'output_paket' => $rec ? $rec['output_paket'] : sanitize_text_field( (string) ( $quiz['output_paket'] ?? '' ) ),
-            'video_laenge' => $rec ? $rec['video_laenge'] : sanitize_text_field( (string) ( $quiz['video_laenge'] ?? 'medium' ) ),
-            'features'     => $rec ? $rec['features']     : $features,
-            // Reasoning für KI-Prompt
+            'user_override'=> $user_override,
+            // Konfig: bei User-Override Client-Werte, sonst Recommendation
+            'video_typ'    => $user_override
+                ? sanitize_text_field( (string) ( $quiz['video_typ'] ?? 'werbespot' ) )
+                : ( $rec['video_typ'] ?? 'werbespot' ),
+            'output_paket' => $user_override
+                ? sanitize_text_field( (string) ( $quiz['output_paket'] ?? '' ) )
+                : ( $rec['output_paket'] ?? '' ),
+            'video_laenge' => $user_override
+                ? sanitize_text_field( (string) ( $quiz['video_laenge'] ?? 'medium' ) )
+                : ( $rec['video_laenge'] ?? 'medium' ),
+            'features'     => $user_override
+                ? $features
+                : ( $rec['features'] ?? [] ),
             'recommendation_reasoning' => $rec['reasoning_short'] ?? '',
         ];
 

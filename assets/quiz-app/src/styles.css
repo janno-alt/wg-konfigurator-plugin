@@ -523,6 +523,169 @@
 
 .wgk__stack { display: flex; flex-direction: column; gap: 10px; }
 
+/* ============================================================
+   CONFIGURE-SECTION (Anpassen-Step)
+   ============================================================ */
+.wgk__config {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+.wgk__config-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.wgk__config-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--wgk-muted);
+  font-weight: 700;
+}
+
+/* Video-Typ-Tabs */
+.wgk__config-typtabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.wgk .wgk__config-typtab {
+  padding: 10px 16px;
+  background-color: var(--wgk-card);
+  border: 1.5px solid var(--wgk-border);
+  border-radius: 8px;
+  color: var(--wgk-fg);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+.wgk .wgk__config-typtab:hover { border-color: #444; background-color: var(--wgk-card-hover); }
+.wgk .wgk__config-typtab.is-active {
+  border-color: var(--wgk-accent);
+  background-color: #1f1f1f;
+  box-shadow: 0 0 0 1px var(--wgk-accent) inset;
+}
+
+/* Output-Paket-Optionen (vertikal) */
+.wgk__config-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.wgk .wgk__config-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background-color: var(--wgk-card);
+  border: 1.5px solid var(--wgk-border);
+  border-radius: 8px;
+  color: var(--wgk-fg);
+  font-size: 13.5px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+.wgk .wgk__config-option:hover { border-color: #444; background-color: var(--wgk-card-hover); }
+.wgk .wgk__config-option.is-active {
+  border-color: var(--wgk-accent);
+  background-color: #1f1f1f;
+  box-shadow: 0 0 0 1px var(--wgk-accent) inset;
+}
+.wgk__config-option-label { flex: 1 1 auto; }
+.wgk__config-option-price {
+  font-weight: 700;
+  color: var(--wgk-accent);
+  font-variant-numeric: tabular-nums;
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+
+/* Length-Pills */
+.wgk__config-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.wgk .wgk__config-pill {
+  padding: 8px 14px;
+  background-color: var(--wgk-card);
+  border: 1.5px solid var(--wgk-border);
+  border-radius: 999px;
+  color: var(--wgk-fg);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.wgk .wgk__config-pill:hover { border-color: #444; }
+.wgk .wgk__config-pill.is-active {
+  border-color: var(--wgk-accent);
+  background-color: var(--wgk-accent);
+  color: var(--wgk-accent-fg);
+}
+
+/* Features-Liste */
+.wgk__config-features {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.wgk .wgk__config-feature {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background-color: var(--wgk-card);
+  border: 1.5px solid var(--wgk-border);
+  border-radius: 8px;
+  color: var(--wgk-fg);
+  font-size: 13.5px;
+  text-align: left;
+  cursor: pointer;
+}
+.wgk .wgk__config-feature:hover { border-color: #444; background-color: var(--wgk-card-hover); }
+.wgk .wgk__config-feature.is-checked {
+  border-color: var(--wgk-accent);
+  background-color: #1f1f1f;
+}
+.wgk__config-feature-check {
+  width: 22px; height: 22px;
+  border-radius: 6px;
+  border: 1.5px solid var(--wgk-border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--wgk-accent-fg);
+  flex: 0 0 auto;
+}
+.wgk__config-feature.is-checked .wgk__config-feature-check {
+  background-color: var(--wgk-accent);
+  border-color: var(--wgk-accent);
+}
+.wgk__config-feature-label { flex: 1 1 auto; }
+.wgk__config-feature-price {
+  font-weight: 600;
+  color: var(--wgk-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.wgk__config-feature.is-checked .wgk__config-feature-price {
+  color: var(--wgk-accent);
+}
+.wgk__config-hint {
+  font-size: 11px;
+  color: var(--wgk-muted);
+  margin: 4px 0 0;
+  font-style: italic;
+}
+
 /* ---------- Sektions-Überschrift (auf Step 1: Video-Typ in 2 Sektionen) ---------- */
 .wgk .wgk__section-title {
   font-size: 12px;
