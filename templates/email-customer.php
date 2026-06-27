@@ -11,6 +11,9 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 $brand = (string) ( $settings['pdf_brand_color'] ?? '#C2F21C' );
 $dark  = (string) ( $settings['pdf_bg_color']    ?? '#141414' );
+$prod  = (string) ( $concept['_product'] ?? 'video' );
+$prod_noun = [ 'video' => 'Videokonzept', 'recruiting' => 'Recruiting-Konzept', 'social' => 'Social-Media-Paket' ][ $prod ] ?? 'Konzept';
+$is_video = ( $prod === 'video' );
 ?>
 <!doctype html>
 <html lang="de"><body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,sans-serif;color:#222;">
@@ -21,15 +24,17 @@ $dark  = (string) ( $settings['pdf_bg_color']    ?? '#141414' );
                 <div style="height:4px;width:60px;background:<?php echo esc_attr( $brand ); ?>;margin-bottom:14px;"></div>
                 <h1 style="margin:0;color:#fff;font-size:24px;line-height:1.2;">
                     Hi <?php echo esc_html( $lead['vorname'] ?: ( $lead['name'] ?? '' ) ); ?>,<br>
-                    <span style="color:<?php echo esc_attr( $brand ); ?>;">dein Videokonzept ist da.</span>
+                    <span style="color:<?php echo esc_attr( $brand ); ?>;">dein <?php echo esc_html( $prod_noun ); ?> ist da.</span>
                 </h1>
             </td></tr>
 
             <tr><td style="padding:24px 28px 8px;">
                 <p style="margin:0 0 14px;font-size:15px;line-height:1.6;">
-                    Im Anhang findest du dein individuelles Konzept als PDF –
-                    inklusive Story-Skizze, Vorbereitungs-Checkliste und einer
-                    Einschätzung des Investitionsrahmens.
+                    <?php if ( $is_video ) : ?>
+                        Im Anhang findest du dein individuelles Konzept als PDF, inklusive Story-Skizze, Vorbereitungs-Checkliste und einer Einschätzung des Investitionsrahmens.
+                    <?php else : ?>
+                        Im Anhang findest du deine individuelle Einschätzung als PDF, inklusive konkreter Empfehlung und Preis-Rahmen.
+                    <?php endif; ?>
                 </p>
                 <p style="margin:0 0 14px;font-size:15px;line-height:1.6;">
                     <strong>Was wir uns überlegt haben:</strong><br>

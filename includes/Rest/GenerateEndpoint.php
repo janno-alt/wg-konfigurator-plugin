@@ -14,6 +14,7 @@ use WG\Konfigurator\Services\GeminiClient;
 use WG\Konfigurator\Services\Mailer;
 use WG\Konfigurator\Services\PdfGenerator;
 use WG\Konfigurator\Services\PriceCalculator;
+use WG\Konfigurator\Services\ProductPricing;
 use WG\Konfigurator\Services\Recommender;
 use WG\Konfigurator\Services\WebhookSender;
 use WG\Konfigurator\Services\WebsiteScraper;
@@ -96,6 +97,13 @@ final class GenerateEndpoint {
 
         if ( $full_name === '' || $nachname === '' || ! is_email( $lead['email'] ) ) {
             return new WP_Error( 'invalid_lead', 'Vor- und Nachname sowie gültige E-Mail erforderlich.', [ 'status' => 400 ] );
+        }
+
+        // ----- Produkt-Modus (recruiting / social) -----
+        // Eigene Pipeline, damit der Video-Pfad unten unverändert bleibt.
+        $product = sanitize_text_field( (string) ( $quiz['product'] ?? 'video' ) );
+        if ( in_array( $product, [ 'recruiting', 'social' ], true ) ) {
+            return $this->handle_product( $product, $request, $lead, $quiz, $tracking, $ip, $settings );
         }
 
         // Neue feature-orientierte Felder
@@ -299,6 +307,168 @@ final class GenerateEndpoint {
             'express_aufschlag' => $pricing['express_aufschlag'],
             'naechste_schritte' => $concept['naechste_schritte'] ?? '',
         ], 200 );
+    }
+
+    /**
+     * Pipeline für die fokussierten Produkte (recruiting, social).
+     * Reuse von Scraper, Gemini (Produkt-Konzept), PdfGenerator, Mailer, Webhook.
+     */
+    private function handle_product( string $product, WP_REST_Request $request, array $lead, array $quiz_raw, array $tracking, string $ip, array $settings ) {
+        $recaptcha_check = $this->verify_recaptcha( (string) $request->get_param( 'recaptcha_token' ), $ip, $settings );
+        if ( $recaptcha_check instanceof WP_Error ) {
+            return $recaptcha_check;
+        }
+
+        // Website normalisieren
+        $raw_website = trim( (string) ( $quiz_raw['website'] ?? '' ) );
+        if ( $raw_website !== '' && ! preg_match( '#^https?://#i', $raw_website ) ) {
+            $raw_website = 'https://' . ltrim( $raw_website, '/' );
+        }
+        $website = $raw_website !== '' ? esc_url_raw( $raw_website ) : '';
+
+        $quiz = [
+            'product'      => $product,
+            'branche'      => sanitize_text_field( (string) ( $quiz_raw['branche'] ?? '' ) ),
+            'website'      => $website,
+            'ziel'         => sanitize_textarea_field( (string) ( $quiz_raw['ziel'] ?? '' ) ),
+            'zeitrahmen'   => sanitize_text_field( (string) ( $quiz_raw['zeitrahmen'] ?? '' ) ),
+            // Recruiting
+            'stellen'      => sanitize_text_field( (string) ( $quiz_raw['stellen'] ?? '' ) ),
+            'rec_video'    => sanitize_text_field( (string) ( $quiz_raw['rec_video'] ?? '' ) ),
+            'rec_kampagne' => sanitize_text_field( (string) ( $quiz_raw['rec_kampagne'] ?? '' ) ),
+            'rec_lp'       => sanitize_text_field( (string) ( $quiz_raw['rec_lp'] ?? '' ) ),
+            // Social
+            'plattformen'  => sanitize_text_field( (string) ( $quiz_raw['plattformen'] ?? '' ) ),
+            'content'      => sanitize_text_field( (string) ( $quiz_raw['content'] ?? '' ) ),
+            'ads'          => sanitize_text_field( (string) ( $quiz_raw['ads'] ?? '' ) ),
+        ];
+
+        $tracking = [
+            'msclkid'      => sanitize_text_field( (string) ( $tracking['msclkid']      ?? '' ) ),
+            'utm_source'   => sanitize_text_field( (string) ( $tracking['utm_source']   ?? '' ) ),
+            'utm_medium'   => sanitize_text_field( (string) ( $tracking['utm_medium']   ?? '' ) ),
+            'utm_campaign' => sanitize_text_field( (string) ( $tracking['utm_campaign'] ?? '' ) ),
+        ];
+
+        try {
+            $website_for_scrape = $quiz['website'];
+            $website_from_email = false;
+            if ( $website_for_scrape === '' ) {
+                $inferred = EmailDomain::infer_website( $lead['email'] );
+                if ( $inferred !== null ) {
+                    $website_for_scrape = $inferred;
+                    $website_from_email = true;
+                }
+            }
+
+            $scraper = new WebsiteScraper();
+            $excerpt = $website_for_scrape !== '' ? $scraper->scrape( $website_for_scrape ) : '';
+            $has_website_context = trim( $excerpt ) !== '';
+
+            if ( $has_website_context ) {
+                $gemini  = new GeminiClient();
+                $concept = $gemini->generate_product_concept( $quiz, $excerpt, $product );
+            } else {
+                $concept = $this->fallback_concept_no_website( $quiz );
+            }
+
+            if ( $website_from_email && $has_website_context ) {
+                $quiz['website'] = $website_for_scrape;
+                $quiz['website_source'] = 'email_domain';
+            } elseif ( $quiz['website'] !== '' ) {
+                $quiz['website_source'] = 'user';
+            } else {
+                $quiz['website_source'] = 'none';
+            }
+
+            $concept['_product'] = $product;
+            $pricing = ( new ProductPricing() )->calculate( $product, $quiz );
+
+            $pdfgen = new PdfGenerator();
+            $pdf    = $pdfgen->render( [
+                'lead'                  => $lead,
+                'quiz'                  => $quiz,
+                'pricing'               => $pricing,
+                'concept'               => $concept,
+                'generated_at'          => gmdate( 'c' ),
+                'placeholder_cover_path'=> WG_KONFIGURATOR_DIR . 'assets/img/pdf-cover-placeholder.png',
+            ] );
+
+            $mailer = new Mailer();
+            $mailer->send_customer( $lead, $pdf, $concept );
+            $mailer->send_admin( $lead, $quiz, $pricing, $pdf );
+
+            $session_id  = sanitize_text_field( (string) ( $request->get_param( 'session_id' ) ?? '' ) );
+            $idempotency = $session_id ?: wp_generate_uuid4();
+
+            $webhook = new WebhookSender();
+            $webhook_result = $webhook->dispatch( [
+                'event'           => 'konfigurator.completed',
+                'idempotency_key' => $idempotency,
+                'session_id'      => $session_id ?: null,
+                'product'         => $product,
+                'lead'            => $lead,
+                'quiz'            => [
+                    'product' => $product,
+                    'branche' => $quiz['branche'],
+                    'website' => $quiz['website'],
+                    'ziel'    => $this->product_summary( $product, $quiz, $pricing ),
+                    'config'  => $quiz,
+                ],
+                'berechnung'      => $pricing,
+                'ki_konzept'      => $concept,
+                'tracking'        => $tracking,
+                'pdf_url'         => $pdf['url'],
+                'generated_at'    => gmdate( 'c' ),
+            ] );
+
+            if ( ! $webhook_result['ok'] ) {
+                error_log( sprintf(
+                    '[wg-konfigurator] Produkt-Webhook nicht erfolgreich: status=%d, attempts=%d',
+                    $webhook_result['status'],
+                    $webhook_result['attempts']
+                ) );
+            }
+        } catch ( Throwable $e ) {
+            error_log( '[wg-konfigurator] Produkt-Pipeline-Fehler: ' . $e->getMessage() );
+            return new WP_Error( 'pipeline_error', 'Etwas ist schiefgelaufen. Wir wurden benachrichtigt.', [ 'status' => 500 ] );
+        }
+
+        return new WP_REST_Response( [
+            'ok'                => true,
+            'product'           => $product,
+            'pdf_url'           => $pdf['url'],
+            'preis_min'         => $pricing['preis_min'],
+            'preis_max'         => $pricing['preis_max'],
+            'express_aufschlag' => $pricing['express_aufschlag'],
+            'monatlich_min'     => $pricing['monatlich_min'],
+            'monatlich_max'     => $pricing['monatlich_max'],
+            'monatlich_from'    => $pricing['monatlich_from'],
+            'monatlich_note'    => $pricing['monatlich_note'],
+            'paket_label'       => $pricing['paket_label'],
+            'naechste_schritte' => $concept['naechste_schritte'] ?? '',
+        ], 200 );
+    }
+
+    /** Kurz-Zusammenfassung der Produkt-Konfiguration fürs CRM-Freitextfeld. */
+    private function product_summary( string $product, array $quiz, array $pricing ): string {
+        if ( $product === 'social' ) {
+            return trim( implode( ' | ', array_filter( [
+                'Paket: ' . ( $pricing['paket_label'] ?? '' ),
+                'Plattformen: ' . ( $quiz['plattformen'] ?? '' ),
+                'Content/Monat: ' . ( $quiz['content'] ?? '' ),
+                'Ads: ' . ( $quiz['ads'] ?? '' ),
+                $quiz['ziel'] ?: '',
+            ] ) ) );
+        }
+        return trim( implode( ' | ', array_filter( [
+            'Recruiting-Paket',
+            'Stellen: ' . ( $quiz['stellen'] ?? '' ),
+            'Video: ' . ( $quiz['rec_video'] ?? '' ),
+            'Kampagne: ' . ( $quiz['rec_kampagne'] ?? '' ),
+            'Bewerber-LP: ' . ( $quiz['rec_lp'] ?? '' ),
+            $quiz['ziel'] ?: '',
+        ] ) ) );
     }
 
     /**

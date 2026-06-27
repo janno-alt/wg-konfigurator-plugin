@@ -28,9 +28,14 @@ final class Shortcode {
      */
     public function render( $atts = [] ): string {
         $atts = shortcode_atts( [
-            'theme'    => 'dark',  // dark | light
+            'theme'    => 'dark',     // dark | light
             'compact'  => 'no',
+            'product'  => 'video',    // video | recruiting | social
         ], $atts, 'wg_konfigurator' );
+
+        $product = in_array( $atts['product'], [ 'video', 'recruiting', 'social' ], true )
+            ? $atts['product']
+            : 'video';
 
         $build_dir = WG_KONFIGURATOR_DIR . 'assets/quiz-app/dist/';
         $build_url = WG_KONFIGURATOR_URL . 'assets/quiz-app/dist/';
@@ -68,6 +73,7 @@ final class Shortcode {
         wp_localize_script( 'wg-konfigurator-app', 'WG_KONFIGURATOR', [
             'restUrl'         => esc_url_raw( rest_url( 'wg-konfigurator/v1/generate' ) ),
             'nonce'           => wp_create_nonce( 'wp_rest' ),
+            'product'         => $product,
             'recaptchaSite'   => $settings['recaptcha_site'] ?? '',
             'meetingUrl'      => 'https://cal.meetergo.com/janno-fleischer/30-min-meeting-or-janno-fleischer',
             'tracking'        => [
@@ -91,9 +97,10 @@ final class Shortcode {
         }
 
         return sprintf(
-            '<div id="wg-konfigurator-root" data-theme="%s" data-compact="%s"></div>',
+            '<div id="wg-konfigurator-root" data-theme="%s" data-compact="%s" data-product="%s"></div>',
             esc_attr( $atts['theme'] ),
-            esc_attr( $atts['compact'] )
+            esc_attr( $atts['compact'] ),
+            esc_attr( $product )
         );
     }
 

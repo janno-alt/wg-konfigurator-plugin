@@ -89,6 +89,134 @@ final class GeminiClient {
         return $concept;
     }
 
+    /**
+     * Konzept für die fokussierten Produkte (recruiting, social). Nutzt dasselbe
+     * Response-Schema, aber produkt-spezifische System-/User-Prompts.
+     *
+     * @param array<string,mixed> $quiz
+     * @return array<string,mixed>
+     */
+    public function generate_product_concept( array $quiz, string $website_excerpt, string $product ): array {
+        $settings = Settings::get();
+        $api_key  = trim( (string) $settings['gemini_api_key'] );
+        if ( $api_key === '' ) {
+            throw new RuntimeException( 'Gemini API-Key fehlt in den Plugin-Einstellungen.' );
+        }
+
+        $payload = [
+            'contents'          => [ [ 'role' => 'user', 'parts' => [ [ 'text' => $this->product_prompt( $quiz, $website_excerpt, $product ) ] ] ] ],
+            'systemInstruction' => [ 'parts' => [ [ 'text' => $this->product_system_prompt( $product ) ] ] ],
+            'generationConfig'  => [
+                'temperature'      => 0.6,
+                'topP'             => 0.9,
+                'responseMimeType' => 'application/json',
+                'responseSchema'   => $this->response_schema(),
+            ],
+            'safetySettings'    => $this->safety_settings(),
+        ];
+
+        $url = sprintf( self::ENDPOINT, rawurlencode( (string) $settings['gemini_model'] ), rawurlencode( $api_key ) );
+        $response = wp_remote_post( $url, [
+            'timeout' => 45,
+            'headers' => [ 'Content-Type' => 'application/json' ],
+            'body'    => wp_json_encode( $payload ),
+        ] );
+
+        if ( is_wp_error( $response ) ) {
+            throw new RuntimeException( 'Gemini-Request fehlgeschlagen: ' . $response->get_error_message() );
+        }
+        $code = wp_remote_retrieve_response_code( $response );
+        $body = wp_remote_retrieve_body( $response );
+        if ( $code !== 200 ) {
+            throw new RuntimeException( "Gemini HTTP {$code}: " . substr( $body, 0, 500 ) );
+        }
+        $text = json_decode( $body, true )['candidates'][0]['content']['parts'][0]['text'] ?? null;
+        if ( ! is_string( $text ) ) {
+            throw new RuntimeException( 'Gemini-Response ohne erwarteten Text-Part.' );
+        }
+        $concept = json_decode( $text, true );
+        if ( ! is_array( $concept ) ) {
+            throw new RuntimeException( 'Gemini-Response war kein gültiges JSON.' );
+        }
+        return $concept;
+    }
+
+    private function product_system_prompt( string $product ): string {
+        $rolle = $product === 'social'
+            ? 'Senior-Social-Media-Stratege bei WG-Digital. Du betreust laufend Social-Media-Kanäle (Instagram, Facebook, LinkedIn, TikTok) für KMU in Mitteldeutschland.'
+            : 'Senior-Recruiting-Stratege bei WG-Digital. Du gewinnst für KMU in Mitteldeutschland mit Recruiting-Videos und Social-Recruiting-Kampagnen passende Bewerber.';
+        return <<<TEXT
+Du bist {$rolle}
+
+DEINE AUFGABE: Aus den Antworten eines konkreten Kunden plus einem Auszug seiner
+Website eine präzise, individuelle Einschätzung ableiten. Keine Floskeln.
+
+REGELN (kritisch):
+1. Konkret statt allgemein, mit Branchen-Vokabular des Kunden.
+2. Wenn Website-Daten leer sind: aus Branche + Zielen Hypothesen ableiten und als
+   "vermutlich…" / "wir nehmen an…" kennzeichnen.
+3. NIEMALS Em-Dashes (—) verwenden. Stattdessen Komma, Doppelpunkt oder Punkt.
+4. Antworte ausschließlich im vorgegebenen JSON-Schema, keine Markdown-Umrandung.
+TEXT;
+    }
+
+    private function product_prompt( array $quiz, string $website, string $product ): string {
+        $website = trim( $website ) !== '' ? $website : '(keine Website angegeben oder Scraping fehlgeschlagen)';
+        $branche = (string) ( $quiz['branche'] ?? '' );
+        $ziel    = (string) ( $quiz['ziel'] ?? '(kein Freitext)' );
+
+        if ( $product === 'social' ) {
+            $ctx = "- Branche: {$branche}\n"
+                 . '- Plattform-Umfang: ' . (string) ( $quiz['plattformen'] ?? '' ) . "\n"
+                 . '- Content-Menge/Monat: ' . (string) ( $quiz['content'] ?? '' ) . "\n"
+                 . '- Werbeanzeigen gewünscht: ' . (string) ( $quiz['ads'] ?? '' ) . "\n"
+                 . "- Freitext: {$ziel}\n";
+            $felder = <<<TEXT
+Fülle die Felder für eine SOCIAL-MEDIA-BETREUUNG (kein Video-Dreh):
+- "wirkungs_hypothese": 1 Satz, was die Betreuung bei wem auslösen soll.
+- "typ_empfehlung_begruendung": warum der gewählte Paket-Umfang zu diesem Kunden passt.
+- "unternehmens_analyse": 3-5 Sätze konkrete Beobachtungen.
+- "video_botschaften": 4-6 konkrete Content-Ideen/Rubriken für die Kanäle (z. B. Behind-the-Scenes, Mitarbeiter-Spotlight).
+- "marketing_strategie": 3-5 Sätze, wie Organisch + Ads zusammenspielen, welche Kanäle, wie Erfolg gemessen wird.
+- "empfohlene_protagonisten": 2-3 Personen/Rollen im Team, die Content liefern können.
+- "empfohlene_locations": 2-3 wiederkehrende Content-Anlässe oder Drehorte im Betrieb.
+- "vorbereitungs_checkliste": 5-6 konkrete Onboarding-Schritte (mit Verb beginnend).
+- "naechste_schritte": 2-3 Sätze mit Zeitangabe.
+TEXT;
+        } else {
+            $ctx = "- Branche/Berufsfeld: {$branche}\n"
+                 . '- Offene Stellen: ' . (string) ( $quiz['stellen'] ?? '' ) . "\n"
+                 . '- Video-Umfang: ' . (string) ( $quiz['rec_video'] ?? '' ) . "\n"
+                 . '- Kampagne gewünscht: ' . (string) ( $quiz['rec_kampagne'] ?? '' ) . "\n"
+                 . '- Bewerber-Landingpage: ' . (string) ( $quiz['rec_lp'] ?? '' ) . "\n"
+                 . "- Freitext: {$ziel}\n";
+            $felder = <<<TEXT
+Fülle die Felder für ein RECRUITING-VIDEO mit optionaler Social-Recruiting-Kampagne:
+- "wirkungs_hypothese": 1 Satz, welche Bewerber:innen sich nach dem Sehen melden sollen.
+- "typ_empfehlung_begruendung": warum dieses Recruiting-Setup für die Branche passt.
+- "unternehmens_analyse": 3-5 Sätze, was diesen Arbeitgeber attraktiv macht.
+- "video_botschaften": 4-6 konkrete Punkte, die im Recruiting-Video gezeigt werden sollten.
+- "marketing_strategie": 3-5 Sätze zur Ausspielung (Kanäle, Targeting, Bewerber-Landingpage, Messung).
+- "empfohlene_protagonisten": 2-3 echte Rollen aus dem Team vor der Kamera.
+- "empfohlene_locations": 2-3 konkrete Drehorte im Betrieb.
+- "vorbereitungs_checkliste": 5-6 konkrete Action-Steps (mit Verb beginnend).
+- "naechste_schritte": 2-3 Sätze mit Zeitangabe.
+TEXT;
+        }
+
+        return <<<TEXT
+KUNDEN-KONFIGURATION:
+{$ctx}
+AUSZUG AUS DER KUNDEN-WEBSITE (gescraped):
+{$website}
+
+---
+{$felder}
+
+WICHTIG: Standard-Inklusivleistungen nicht als Botschaft auflisten.
+TEXT;
+    }
+
     private function system_prompt(): string {
         return <<<TEXT
 Du bist Senior-Strategie-Berater bei WG-Digital, einer Videomarketing-Agentur aus

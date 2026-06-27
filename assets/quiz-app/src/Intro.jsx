@@ -8,7 +8,16 @@ import React, { useState } from 'react';
  * - Name + E-Mail werden hier erfasst — der Lead-Step am Ende des Quiz entfällt.
  * - Email-Domain wird im /start-Endpoint geprüft (Website-Auto-Discovery).
  */
-export default function Intro({ lead, setLead, onStart, starting, error }) {
+const DEFAULT_COPY = {
+  eyebrow: 'Video-Konfigurator',
+  headlineHtml: 'Dein <span class="accent">Videokonzept</span> in 2 Minuten.',
+  sub: 'Konfiguriere dein Video — wir schicken dir kostenlos eine KI-Analyse mit konkretem Preis-Rahmen per E-Mail.',
+  flow: ['Konfigurieren', 'KI-Analyse', 'PDF im Postfach'],
+  cta: 'Konfigurator starten',
+};
+
+export default function Intro({ lead, setLead, onStart, starting, error, copy }) {
+  const c = copy || DEFAULT_COPY;
   const [touched, setTouched] = useState(false);
   const nameValid  = lead.name.trim().split(/\s+/).length >= 2;
   const emailValid = /\S+@\S+\.\S+/.test(lead.email);
@@ -26,22 +35,18 @@ export default function Intro({ lead, setLead, onStart, starting, error }) {
   return (
     <div className="wgk wgk--dark wgk__intro">
       <div className="wgk__intro-hero">
-        <span className="wgk__intro-eyebrow">Video-Konfigurator</span>
-        <h1 className="wgk__intro-headline">
-          Dein <span className="accent">Videokonzept</span> in 2 Minuten.
-        </h1>
-        <p className="wgk__intro-sub">
-          Konfiguriere dein Video — wir schicken dir kostenlos eine KI-Analyse
-          mit konkretem Preis-Rahmen per E-Mail.
-        </p>
+        <span className="wgk__intro-eyebrow">{c.eyebrow}</span>
+        <h1 className="wgk__intro-headline" dangerouslySetInnerHTML={{ __html: c.headlineHtml }} />
+        <p className="wgk__intro-sub">{c.sub}</p>
       </div>
 
       <div className="wgk__intro-flow">
-        <span><strong>1.</strong> Konfigurieren</span>
-        <span className="wgk__intro-flow-arrow">→</span>
-        <span><strong>2.</strong> KI-Analyse</span>
-        <span className="wgk__intro-flow-arrow">→</span>
-        <span><strong>3.</strong> PDF im Postfach</span>
+        {c.flow.map((label, i) => (
+          <React.Fragment key={i}>
+            {i > 0 && <span className="wgk__intro-flow-arrow">→</span>}
+            <span><strong>{i + 1}.</strong> {label}</span>
+          </React.Fragment>
+        ))}
       </div>
 
       <div className="wgk__intro-form">
@@ -92,7 +97,7 @@ export default function Intro({ lead, setLead, onStart, starting, error }) {
           onClick={handleStart}
           disabled={starting}
         >
-          {starting ? 'Wird vorbereitet …' : 'Konfigurator starten'}
+          {starting ? 'Wird vorbereitet …' : c.cta}
         </button>
 
         {error && <p className="wgk__error">{error}</p>}

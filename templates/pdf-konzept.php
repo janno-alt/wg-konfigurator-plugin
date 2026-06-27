@@ -22,6 +22,15 @@ $pricing  = (array)  ( $ctx['pricing'] ?? [] );
 $concept  = (array)  ( $ctx['concept'] ?? [] );
 $today    = wp_date( 'd.m.Y' );
 
+$product  = (string) ( $quiz['product'] ?? 'video' );
+$is_video = ( $product === 'video' );
+$doc_titles = [
+    'video'      => 'Videokonzept',
+    'recruiting' => 'Recruiting-Konzept',
+    'social'     => 'Social-Media-Paket',
+];
+$doc_title = $doc_titles[ $product ] ?? 'Konzept';
+
 $fmt_eur = static function ( $n ): string {
     return number_format( (int) $n, 0, ',', '.' ) . ' €';
 };
@@ -30,7 +39,7 @@ $fmt_eur = static function ( $n ): string {
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>Videokonzept – <?php echo esc_html( $lead['vorname'] ?? 'Kunde' ); ?></title>
+<title><?php echo esc_html( $doc_title ); ?> – <?php echo esc_html( $lead['vorname'] ?? 'Kunde' ); ?></title>
 <style>
     @page { margin: 0; size: A4 portrait; }
     body, html { margin: 0; padding: 0; }
@@ -110,7 +119,7 @@ $fmt_eur = static function ( $n ): string {
 <div class="page">
     <div class="cover-header"></div>
     <span class="accent-bar"></span>
-    <h1>Dein individuelles<br><span class="accent">Videokonzept</span></h1>
+    <h1>Dein individuelles<br><span class="accent"><?php echo esc_html( $doc_title ); ?></span></h1>
     <p style="font-size:14pt; color:#CCC; margin-top:14pt;">
         Erstellt für <strong><?php echo esc_html( $lead['name'] ?: ( $lead['vorname'] ?? '–' ) ); ?></strong>
         am <?php echo esc_html( $today ); ?>.
@@ -133,23 +142,42 @@ $fmt_eur = static function ( $n ): string {
         <?php echo esc_html( $concept['wirkungs_hypothese'] ?? '–' ); ?>
     </p>
 
+    <?php if ( (int) ( $pricing['preis_max'] ?? 0 ) > 0 ) : ?>
     <div class="pricebox">
-        <div class="label">Investitionsrahmen (geschätzt)</div>
+        <div class="label"><?php echo $is_video ? 'Investitionsrahmen (geschätzt)' : 'Einmalige Leistungen (geschätzt)'; ?></div>
         <div class="value">
             <?php echo esc_html( $fmt_eur( $pricing['preis_min'] ?? 0 ) ); ?>
             &nbsp;–&nbsp;
             <?php echo esc_html( $fmt_eur( $pricing['preis_max'] ?? 0 ) ); ?>
         </div>
         <p class="note" style="margin-top:8pt;">
-            Inkl. Konzept, Vorbereitung, Drehtag mit Equipment, Schnitt,
-            Branding und plattformgerechtem Export. Reisekosten ab 100 km separat.
+            <?php if ( $is_video ) : ?>
+                Inkl. Konzept, Vorbereitung, Drehtag mit Equipment, Schnitt, Branding und plattformgerechtem Export.
+            <?php else : ?>
+                Einmalige Produktion. Reisekosten ab 100 km separat.
+            <?php endif; ?>
             <?php if ( ! empty( $pricing['express_aufschlag'] ) ) : ?>
                 <br>Enthält Express-Aufschlag von ca. <?php echo esc_html( $fmt_eur( $pricing['express_aufschlag'] ) ); ?>.
             <?php endif; ?>
         </p>
     </div>
+    <?php endif; ?>
 
-    <h3>Investitions-Aufschlüsselung</h3>
+    <?php if ( (int) ( $pricing['monatlich_max'] ?? 0 ) > 0 ) : ?>
+    <div class="pricebox">
+        <div class="label"><?php echo esc_html( (string) ( $pricing['paket_label'] ?? 'Monatlich' ) ); ?></div>
+        <div class="value">
+            <?php echo ! empty( $pricing['monatlich_from'] ) ? 'ab ' : ''; ?><?php echo esc_html( $fmt_eur( $pricing['monatlich_min'] ?? 0 ) ); ?>
+            <span style="font-size:12pt;color:#bbb;">/ Monat</span>
+        </div>
+        <?php if ( ! empty( $pricing['monatlich_note'] ) ) : ?>
+            <p class="note" style="margin-top:8pt;"><?php echo esc_html( (string) $pricing['monatlich_note'] ); ?></p>
+        <?php endif; ?>
+    </div>
+    <?php endif; ?>
+
+    <?php if ( ! empty( $pricing['items'] ) ) : ?>
+    <h3>Aufschlüsselung</h3>
     <table class="kv">
         <?php foreach ( (array) ( $pricing['items'] ?? [] ) as $it ) :
             $val = ( (int) $it['min'] === (int) $it['max'] )
@@ -162,20 +190,44 @@ $fmt_eur = static function ( $n ): string {
             </tr>
         <?php endforeach; ?>
     </table>
-    <p class="note" style="margin-top:4pt;">Alle Preise netto, zzgl. MwSt. Untertitel und lizenzierte Musik immer inklusive.</p>
+    <?php endif; ?>
+
+    <?php if ( ! empty( $pricing['recurring_items'] ) ) : ?>
+    <h3>Enthaltene Leistungen<?php echo $is_video ? '' : ' (monatlich)'; ?></h3>
+    <ul>
+        <?php foreach ( (array) $pricing['recurring_items'] as $ri ) : ?>
+            <li><?php echo esc_html( (string) $ri ); ?></li>
+        <?php endforeach; ?>
+    </ul>
+    <?php endif; ?>
+
+    <p class="note" style="margin-top:4pt;">Alle Preise netto, zzgl. MwSt.<?php echo $is_video ? ' Untertitel und lizenzierte Musik immer inklusive.' : ''; ?></p>
 
     <h3>Eckdaten deiner Anfrage</h3>
     <table class="kv">
-        <tr><td class="k">Video-Typ</td>     <td class="v"><?php echo esc_html( \WG\Konfigurator\Services\PriceCalculator::type_label( (string) ( $pricing['breakdown']['video_typ'] ?? '' ) ) ); ?></td></tr>
-        <?php if ( ! empty( $quiz['output_paket'] ) ) : ?>
-            <tr><td class="k">Output-Paket</td>  <td class="v"><?php echo esc_html( \WG\Konfigurator\Services\PriceCalculator::paket_label( (string) $quiz['output_paket'] ) ); ?></td></tr>
+        <?php if ( $is_video ) : ?>
+            <tr><td class="k">Video-Typ</td>     <td class="v"><?php echo esc_html( \WG\Konfigurator\Services\PriceCalculator::type_label( (string) ( $pricing['breakdown']['video_typ'] ?? '' ) ) ); ?></td></tr>
+            <?php if ( ! empty( $quiz['output_paket'] ) ) : ?>
+                <tr><td class="k">Output-Paket</td>  <td class="v"><?php echo esc_html( \WG\Konfigurator\Services\PriceCalculator::paket_label( (string) $quiz['output_paket'] ) ); ?></td></tr>
+            <?php endif; ?>
+            <?php if ( ! empty( $quiz['video_laenge'] ) ) : ?>
+                <tr><td class="k">Video-Länge</td>   <td class="v"><?php echo esc_html( \WG\Konfigurator\Services\PriceCalculator::length_label( (string) $quiz['video_laenge'] ) ); ?></td></tr>
+            <?php endif; ?>
+            <tr><td class="k">Zeitrahmen</td>    <td class="v"><?php echo esc_html( (string) ( $quiz['zeitrahmen'] ?? '–' ) ); ?></td></tr>
+        <?php elseif ( $product === 'recruiting' ) : ?>
+            <tr><td class="k">Berufsfeld</td>       <td class="v"><?php echo esc_html( (string) ( $quiz['branche'] ?: '–' ) ); ?></td></tr>
+            <tr><td class="k">Offene Stellen</td>   <td class="v"><?php echo esc_html( (string) ( $quiz['stellen'] ?: '–' ) ); ?></td></tr>
+            <tr><td class="k">Video-Umfang</td>     <td class="v"><?php echo esc_html( ( $quiz['rec_video'] ?? '' ) === 'paket' ? 'Video + Kurz-Cutdowns' : 'Ein Recruiting-Video' ); ?></td></tr>
+            <tr><td class="k">Kampagne</td>         <td class="v"><?php echo ( $quiz['rec_kampagne'] ?? '' ) === 'ja' ? 'Social-Recruiting-Kampagne' : 'Nein'; ?></td></tr>
+            <tr><td class="k">Bewerber-Landingpage</td><td class="v"><?php echo ( $quiz['rec_lp'] ?? '' ) === 'ja' ? 'Ja' : 'Nein'; ?></td></tr>
+            <tr><td class="k">Zeitrahmen</td>       <td class="v"><?php echo esc_html( (string) ( $quiz['zeitrahmen'] ?: '–' ) ); ?></td></tr>
+        <?php else : ?>
+            <tr><td class="k">Branche</td>          <td class="v"><?php echo esc_html( (string) ( $quiz['branche'] ?: '–' ) ); ?></td></tr>
+            <tr><td class="k">Plattformen</td>      <td class="v"><?php echo esc_html( (string) ( $quiz['plattformen'] ?: '–' ) ); ?></td></tr>
+            <tr><td class="k">Content pro Monat</td><td class="v"><?php echo esc_html( (string) ( $quiz['content'] ?: '–' ) ); ?></td></tr>
+            <tr><td class="k">Werbeanzeigen</td>    <td class="v"><?php echo ( $quiz['ads'] ?? '' ) === 'ja' ? 'Ja' : 'Organisch'; ?></td></tr>
         <?php endif; ?>
-        <?php if ( ! empty( $quiz['video_laenge'] ) ) : ?>
-            <tr><td class="k">Video-Länge</td>   <td class="v"><?php echo esc_html( \WG\Konfigurator\Services\PriceCalculator::length_label( (string) $quiz['video_laenge'] ) ); ?></td></tr>
-        <?php endif; ?>
-        <tr><td class="k">Zeitrahmen</td>    <td class="v"><?php echo esc_html( (string) ( $quiz['zeitrahmen'] ?? '–' ) ); ?></td></tr>
-        <tr><td class="k">Branche</td>       <td class="v"><?php echo esc_html( (string) ( $quiz['branche'] ?? '–' ) ); ?></td></tr>
-        <tr><td class="k">Website</td>       <td class="v"><?php echo esc_html( (string) ( $quiz['website'] ?? '–' ) ); ?></td></tr>
+        <tr><td class="k">Website</td>       <td class="v"><?php echo esc_html( (string) ( $quiz['website'] ?: '–' ) ); ?></td></tr>
     </table>
 
     <div class="footer">
@@ -188,13 +240,13 @@ $fmt_eur = static function ( $n ): string {
 <?php if ( empty( $concept['_no_website'] ) && ! empty( $concept['typ_empfehlung_begruendung'] ) ) : ?>
 <div class="page">
     <span class="accent-bar"></span>
-    <h2>Warum dieser Video-Typ?</h2>
+    <h2><?php echo $is_video ? 'Warum dieser Video-Typ?' : 'Unsere Empfehlung für euch'; ?></h2>
     <p style="line-height:1.7;">
         <?php echo nl2br( esc_html( (string) $concept['typ_empfehlung_begruendung'] ) ); ?>
     </p>
 
     <?php if ( ! empty( $concept['marketing_strategie'] ) ) : ?>
-        <h3 style="margin-top:24pt;">So fügt sich das Video in deine Marketing-Strategie ein</h3>
+        <h3 style="margin-top:24pt;">So fügt sich das in deine Marketing-Strategie ein</h3>
         <p style="line-height:1.7;">
             <?php echo nl2br( esc_html( (string) $concept['marketing_strategie'] ) ); ?>
         </p>
@@ -237,7 +289,7 @@ $fmt_eur = static function ( $n ): string {
             <?php echo nl2br( esc_html( (string) ( $concept['unternehmens_analyse'] ?? '–' ) ) ); ?>
         </p>
 
-        <h3>Das sollte im Video herausgestellt werden</h3>
+        <h3><?php echo $is_video ? 'Das sollte im Video herausgestellt werden' : ( $product === 'social' ? 'Empfohlene Inhalte für eure Kanäle' : 'Das sollte im Recruiting-Video herausgestellt werden' ); ?></h3>
         <ul>
             <?php foreach ( (array) ( $concept['video_botschaften'] ?? [] ) as $b ) : ?>
                 <li><?php echo esc_html( (string) $b ); ?></li>
@@ -256,14 +308,14 @@ $fmt_eur = static function ( $n ): string {
     <span class="accent-bar"></span>
     <h2>Wer und wo</h2>
 
-    <h3 style="margin-top:0;">Empfohlene Protagonist:innen</h3>
+    <h3 style="margin-top:0;"><?php echo $product === 'social' ? 'Wer Content liefern kann' : 'Empfohlene Protagonist:innen'; ?></h3>
     <ul>
         <?php foreach ( (array) ( $concept['empfohlene_protagonisten'] ?? [] ) as $p ) : ?>
             <li><?php echo esc_html( (string) $p ); ?></li>
         <?php endforeach; ?>
     </ul>
 
-    <h3>Empfohlene Drehorte bei dir vor Ort</h3>
+    <h3><?php echo $product === 'social' ? 'Empfohlene Content-Anlässe' : 'Empfohlene Drehorte bei dir vor Ort'; ?></h3>
     <ul>
         <?php foreach ( (array) ( $concept['empfohlene_locations'] ?? [] ) as $l ) : ?>
             <li><?php echo esc_html( (string) $l ); ?></li>
@@ -296,7 +348,8 @@ $fmt_eur = static function ( $n ): string {
     </div>
 </div>
 
-<!-- ============== SEITE 6: Ablauf ============== -->
+<?php if ( $is_video ) : ?>
+<!-- ============== SEITE 6: Ablauf (nur Video) ============== -->
 <div class="page">
     <span class="accent-bar"></span>
     <h2>Ablauf in 4 Schritten</h2>
@@ -323,7 +376,9 @@ $fmt_eur = static function ( $n ): string {
     </div>
 </div>
 
-<!-- ============== SEITE 7: Warum WG ============== -->
+<?php endif; /* /Video-only Ablauf */ ?>
+<?php if ( $is_video ) : ?>
+<!-- ============== SEITE 7: Warum WG (nur Video) ============== -->
 <div class="page">
     <span class="accent-bar"></span>
     <h2>Warum WG-Digital</h2>
@@ -346,6 +401,7 @@ $fmt_eur = static function ( $n ): string {
     </div>
 </div>
 
+<?php endif; /* /Video-only Warum-WG */ ?>
 <!-- ============== SEITE 8: Nächste Schritte / CTA ============== -->
 <div class="page">
     <span class="accent-bar"></span>

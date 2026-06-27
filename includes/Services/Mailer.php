@@ -19,7 +19,9 @@ final class Mailer {
     public function send_customer( array $lead, array $pdf, array $concept ): bool {
         $settings = Settings::get();
         $vorname  = $lead['vorname'] ?: ( $lead['name'] ?? '' );
-        $subject  = sprintf( '%s, dein Videokonzept ist da', $vorname );
+        $prod     = (string) ( $concept['_product'] ?? 'video' );
+        $noun     = [ 'video' => 'Videokonzept', 'recruiting' => 'Recruiting-Konzept', 'social' => 'Social-Media-Paket' ][ $prod ] ?? 'Konzept';
+        $subject  = sprintf( '%s, dein %s ist da', $vorname, $noun );
 
         $html = $this->render_template( 'email-customer.php', [
             'lead'    => $lead,

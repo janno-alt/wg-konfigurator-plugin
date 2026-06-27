@@ -1130,3 +1130,46 @@
   font-size: 12px;
   color: var(--wgk-muted);
 }
+
+/* ---------- Produkt-Modus: Paket-/Recurring-Block (Sidebar) ---------- */
+.wgk .wgk__rec {
+  margin-top: 18px;
+  padding: 16px 18px;
+  border: 1px solid var(--wgk-accent);
+  border-radius: 12px;
+  background: rgba(194, 242, 28, 0.06);
+}
+.wgk .wgk__rec-label {
+  display: block;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--wgk-muted);
+  margin-bottom: 4px;
+}
+.wgk .wgk__rec-price {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  color: var(--wgk-accent);
+  margin-bottom: 12px;
+}
+.wgk .wgk__rec-price strong { font-size: 30px; font-weight: 700; line-height: 1; }
+.wgk .wgk__rec-from { font-size: 14px; color: var(--wgk-muted); }
+.wgk .wgk__rec-per { font-size: 13px; color: var(--wgk-muted); }
+.wgk .wgk__rec-incl { list-style: none; margin: 0; padding: 0; }
+.wgk .wgk__rec-incl li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--wgk-text, #d8d8d8);
+  padding: 4px 0;
+}
+.wgk .wgk__rec-check { color: var(--wgk-accent); font-weight: 700; flex: 0 0 auto; }
+.wgk .wgk__rec-note {
+  margin: 10px 0 0;
+  font-size: 11px;
+  color: var(--wgk-muted);
+  line-height: 1.4;
+}

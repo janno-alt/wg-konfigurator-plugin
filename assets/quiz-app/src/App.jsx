@@ -4,11 +4,18 @@ import Quiz from './Quiz.jsx';
 import Result from './Result.jsx';
 import Loading from './Loading.jsx';
 import PriceSidebar from './PriceSidebar.jsx';
+import AppProduct from './AppProduct.jsx';
 import { recommend } from './recommendation.js';
 
 const STEPS = ['goal', 'branche', 'channels', 'zeitrahmen', 'configure', 'kontext'];
 
-export default function App({ theme = 'dark' }) {
+export default function App({ theme = 'dark', product = 'video' }) {
+  // Recruiting & Social laufen über einen eigenen Orchestrator,
+  // damit der bewährte Video-Pfad unten unverändert bleibt.
+  if (product === 'recruiting' || product === 'social') {
+    return <AppProduct theme={theme} product={product} />;
+  }
+
   const config = window.WG_KONFIGURATOR || {};
   const [phase, setPhase] = useState('intro');
   const [sessionId, setSessionId] = useState('');
