@@ -1,36 +1,35 @@
 /* ============================================================
    WG-Konfigurator – Produkt-Definitionen (Recruiting + Social)
    ------------------------------------------------------------
-   Jeder Eintrag definiert: Intro-Text, Frage-Flow (steps), Start-
-   Antworten, Preis-Logik (computeBreakdown) und Result-Texte.
-
-   PREISE: zentral hier oben gepflegt. Platzhalter sind mit
-   "TODO PREIS" markiert und werden gemeinsam mit Janno scharf
-   gestellt. Server-Spiegel: includes/Services/ProductPricing.php
+   Preise zentral hier. Server-Spiegel: includes/Services/ProductPricing.php
+   (beide MÜSSEN synchron bleiben).
    ============================================================ */
 
 export const fmtEur = (n) => new Intl.NumberFormat('de-DE').format(Math.round(n)) + ' €';
 export const fmtRange = (min, max) =>
   min === max ? fmtEur(min) : `${new Intl.NumberFormat('de-DE').format(Math.round(min))} – ${fmtEur(max)}`;
 
-/* ===================== PREISE (zentral) ===================== */
+/* ===================== PREISE (zentral, real von Janno) ===================== */
 const PRICES = {
   recruiting: {
-    video_base_min: 2000,           // bestehende Recruiting-Video-Logik (real)
-    video_base_max: 3000,           // real
-    konzept: 800,                   // real
-    cutdowns_add: 600,              // real (Paket-Aufschlag Kurzvideos)
-    landingpage: 900,               // TODO PREIS bestätigen (Bewerber-Landingpage einmalig)
-    kampagne_monat: 490,            // TODO PREIS bestätigen (Social-Recruiting-Betreuung mtl., exkl. Werbebudget)
-    express_mult: 0.20,             // real (Express-Aufschlag auf Einmalkosten)
+    video_base:     2000,   // 1 Stelle, inkl. Konzept
+    stelle_add:     750,    // je weitere Stelle
+    landingpage:    900,    // Bewerber-Landingpage (einmalig)
+    kampagne_monat: 250,    // Social-Recruiting-Betreuung mtl. (exkl. Werbebudget)
+    express_mult:   0.20,   // Express-Aufschlag auf Einmalkosten
   },
   social: {
-    // Reale Paketpreise von /social-media-betreuung (Seite 8142)
-    starter:     { price: 300, from: false, label: 'Starter' },
-    standard:    { price: 500, from: false, label: 'Standard' },
-    performance: { price: 990, from: true,  label: 'Performance' },
+    statisch: { price: 300, label: 'Statisch',    incl: [ '6 statische Beiträge pro Monat', 'Redaktionsplan & Texte', 'Community-Management', 'Monatlicher Report' ] },
+    reels4_q: { price: 500, label: 'Reels Basis', incl: [ '4 Reels pro Monat', '1 Drehtag pro Quartal', 'Redaktionsplan, Schnitt & Veröffentlichung', 'Community-Management', 'Monatlicher Report' ] },
+    reels4_m: { price: 700, label: 'Reels Plus',  incl: [ '4 Reels pro Monat', 'Drehtag jeden Monat (frischer Content)', 'Redaktionsplan, Schnitt & Veröffentlichung', 'Community-Management', 'Monatlicher Report' ] },
+    reels8:   { price: 990, label: 'Reels Pro',   incl: [ '8 Reels pro Monat', '1 Drehtag alle 2 Monate', 'Redaktionsplan, Schnitt & Veröffentlichung', 'Community-Management', 'Monatlicher Report' ] },
   },
 };
+
+const BRANCHEN = [
+  'Handwerk', 'Industrie / Produktion', 'Pflege / Gesundheit', 'Hotel / Gastro',
+  'Dienstleister / B2B', 'Handel / E-Commerce', 'Sonstiges',
+];
 
 /* ===================== RECRUITING ===================== */
 const recruiting = {
@@ -43,15 +42,14 @@ const recruiting = {
     cta: 'Konfigurator starten',
   },
   initialAnswers: {
-    branche: '', stellen: '', rec_video: 'einzel', rec_kampagne: 'nein',
-    rec_lp: 'nein', zeitrahmen: 'flexibel', website: '', ziel: '',
+    branche: '', stellen: '', rec_kampagne: 'nein', rec_lp: 'nein',
+    zeitrahmen: 'flexibel', website: '', ziel: '',
   },
   steps: [
     {
-      key: 'branche', field: 'branche', type: 'single',
+      key: 'branche', field: 'branche', type: 'single', grid: true,
       title: 'Für welchen Bereich sucht ihr Leute?',
       subtitle: 'Damit wir die Ansprache auf eure Zielgruppe abstimmen.',
-      grid: true,
       options: [
         { id: 'Handwerk / Bau', label: 'Handwerk / Bau' },
         { id: 'Pflege / Gesundheit', label: 'Pflege / Gesundheit' },
@@ -65,19 +63,11 @@ const recruiting = {
     {
       key: 'stellen', field: 'stellen', type: 'single',
       title: 'Wie viele Stellen wollt ihr besetzen?',
+      subtitle: 'Basis ist eine Stelle inkl. Konzept. Jede weitere Stelle kostet 750 € extra.',
       options: [
         { id: '1', label: '1 Stelle', hint: 'Eine konkrete Position' },
-        { id: '2-3', label: '2 bis 3 Stellen', hint: 'Mehrere Positionen parallel' },
+        { id: '2-3', label: '2 bis 3 Stellen', hint: 'Mehrere Positionen, gemeinsamer Drehtag' },
         { id: 'laufend', label: 'Laufend / mehrere', hint: 'Ihr stellt dauerhaft ein' },
-      ],
-    },
-    {
-      key: 'rec_video', field: 'rec_video', type: 'single',
-      title: 'Welchen Video-Umfang wollt ihr?',
-      subtitle: 'Das Recruiting-Video ist der Kern. Cutdowns sind kurze Schnitte für die Anzeigen.',
-      options: [
-        { id: 'einzel', label: 'Ein Recruiting-Video', hint: '1 Drehtag, ein fertiges Hauptvideo' },
-        { id: 'paket', label: 'Video + Kurz-Cutdowns', hint: 'Hauptvideo plus mehrere kurze Schnitte für Anzeigen', badge: 'beliebt' },
       ],
     },
     {
@@ -122,14 +112,17 @@ const recruiting = {
   computeBreakdown(a) {
     const P = PRICES.recruiting;
     const items = [];
-    items.push({ key: 'base', label: 'Recruiting-Video (1 Drehtag)', min: P.video_base_min, max: P.video_base_max });
-    items.push({ key: 'konzept', label: '+ Konzept-Workshop (Drehbuch, Drehplan)', min: P.konzept, max: P.konzept });
-    if (a.rec_video === 'paket') {
-      items.push({ key: 'cutdowns', label: '+ Kurz-Cutdowns für Anzeigen', min: P.cutdowns_add, max: P.cutdowns_add });
+    items.push({ key: 'base', label: 'Recruiting-Video inkl. Konzept', min: P.video_base, max: P.video_base });
+
+    if (a.stellen === '2-3') {
+      items.push({ key: 'stellen', label: '+ weitere Stelle (1 bis 2)', min: P.stelle_add, max: P.stelle_add * 2 });
+    } else if (a.stellen === 'laufend') {
+      items.push({ key: 'stellen', label: `+ weitere Stellen (je +${P.stelle_add} €)`, min: P.stelle_add, max: P.stelle_add * 2 });
     }
     if (a.rec_lp === 'ja') {
       items.push({ key: 'lp', label: '+ Bewerber-Landingpage', min: P.landingpage, max: P.landingpage });
     }
+
     let one_min = items.reduce((s, it) => s + it.min, 0);
     let one_max = items.reduce((s, it) => s + it.max, 0);
     if (a.zeitrahmen === 'express') {
@@ -138,6 +131,7 @@ const recruiting = {
       items.push({ key: 'express', label: '+ Express-Aufschlag (+20 %)', min: em, max: ex });
       one_min += em; one_max += ex;
     }
+
     let recurring = null;
     if (a.rec_kampagne === 'ja') {
       recurring = {
@@ -147,97 +141,49 @@ const recruiting = {
           { label: 'Laufende Optimierung der Kampagne' },
           { label: 'Reporting der Bewerbungen' },
         ],
-        min: P.kampagne_monat, max: P.kampagne_monat, from: true,
+        min: P.kampagne_monat, max: P.kampagne_monat, from: false,
         note: 'monatliche Betreuung, zzgl. Werbebudget (bestimmt ihr selbst)',
       };
     }
-    return {
-      ready: true,
-      items, total_min: one_min, total_max: one_max,
-      recurring,
-      type_label: 'Recruiting-Paket',
-    };
+    return { ready: true, items, total_min: one_min, total_max: one_max, recurring, type_label: 'Recruiting-Paket' };
   },
 };
 
 /* ===================== SOCIAL-MEDIA BETREUUNG ===================== */
-function socialTier(a) {
-  let tier = 'starter';
-  if (a.content === '16' || a.plattformen === '23' || a.ads === 'ja') tier = 'standard';
-  if (a.plattformen === '45' || a.content === '20' ||
-      (a.ads === 'ja' && (a.plattformen === '23' || a.content === '16'))) tier = 'performance';
-  return tier;
-}
-
-const SOCIAL_INCL = {
-  starter: ['1 Plattform', '8 Posts/Reels pro Monat', 'Community-Management (Mo–Fr)', 'Monatlicher Report'],
-  standard: ['bis 3 Plattformen', '16 Posts/Reels pro Monat', 'Werbeanzeigen-Betreuung', 'Community-Management', 'Monatlicher Report'],
-  performance: ['alle 5 Plattformen', 'höchste Content-Frequenz', 'Meta + LinkedIn Ads (Setup & Optimierung)', 'erweiterte Service-Zeiten', 'monatlicher Strategie-Call'],
-};
-
 const social = {
   id: 'social',
   intro: {
     eyebrow: 'Social-Media-Konfigurator',
     headlineHtml: 'Dein <span class="accent">Social-Media-Paket</span> in 90 Sekunden.',
-    sub: 'Beantworte ein paar kurze Fragen, wir empfehlen dir das passende Betreuungs-Paket und schicken dir kostenlos eine Einschätzung per E-Mail.',
-    flow: ['Fragen beantworten', 'Paket-Empfehlung', 'PDF im Postfach'],
+    sub: 'Wähle deinen Content-Umfang, wir zeigen dir das passende Paket und schicken dir kostenlos eine Einschätzung per E-Mail.',
+    flow: ['Umfang wählen', 'Paket-Empfehlung', 'PDF im Postfach'],
     cta: 'Konfigurator starten',
   },
-  initialAnswers: {
-    plattformen: '', content: '', ads: '', branche: '', website: '', ziel: '',
-  },
+  initialAnswers: { paket: '', branche: '', website: '', ziel: '' },
   steps: [
     {
-      key: 'plattformen', field: 'plattformen', type: 'single',
-      title: 'Auf wie vielen Plattformen wollt ihr aktiv sein?',
-      subtitle: 'Z. B. Instagram, Facebook, LinkedIn, TikTok, Google-Profil.',
+      key: 'paket', field: 'paket', type: 'single',
+      title: 'Welcher Content-Umfang passt zu euch?',
+      subtitle: 'Das bestimmt euer monatliches Paket. Die enthaltenen Leistungen siehst du rechts.',
       options: [
-        { id: '1', label: 'Eine Plattform', hint: 'Fokus auf den wichtigsten Kanal' },
-        { id: '23', label: 'Zwei bis drei', hint: 'Der typische Mix' },
-        { id: '45', label: 'Vier bis fünf', hint: 'Maximale Sichtbarkeit' },
+        { id: 'statisch', label: '6 statische Beiträge / Monat', hint: 'Regelmäßige Posts, ohne Video' },
+        { id: 'reels4_q', label: '4 Reels / Monat', hint: 'Dreh alle 3 Monate, günstigster Reels-Einstieg', badge: 'beliebt' },
+        { id: 'reels4_m', label: '4 Reels / Monat, frischer', hint: 'Drehtag jeden Monat für aktuellen Content' },
+        { id: 'reels8', label: '8 Reels / Monat', hint: 'Maximale Reichweite, Dreh alle 2 Monate' },
       ],
     },
     {
-      key: 'content', field: 'content', type: 'single',
-      title: 'Wie viel Content pro Monat?',
-      subtitle: 'Posts und Reels, die wir für euch erstellen und veröffentlichen.',
-      options: [
-        { id: '8', label: 'Etwa 8 pro Monat', hint: 'Solide Grundpräsenz' },
-        { id: '16', label: 'Etwa 16 pro Monat', hint: 'Spürbares Wachstum', badge: 'beliebt' },
-        { id: '20', label: '20+ pro Monat', hint: 'Maximale Frequenz' },
-      ],
-    },
-    {
-      key: 'ads', field: 'ads', type: 'single',
-      title: 'Sollen wir auch Werbeanzeigen betreuen?',
-      subtitle: 'Meta- und LinkedIn-Ads: Setup, Optimierung und Tracking, zusätzlich zur organischen Betreuung.',
-      options: [
-        { id: 'ja', label: 'Ja, Ads dazu', hint: 'Reichweite gezielt verstärken' },
-        { id: 'nein', label: 'Erstmal organisch', hint: 'Nur regelmäßige Beiträge' },
-      ],
-    },
-    {
-      key: 'branche', field: 'branche', type: 'single',
+      key: 'branche', field: 'branche', type: 'single', grid: true,
       title: 'In welcher Branche seid ihr?',
       subtitle: 'Damit wir Themen und Tonalität abstimmen.',
-      grid: true,
-      options: [
-        { id: 'Handwerk', label: 'Handwerk' },
-        { id: 'Industrie / Produktion', label: 'Industrie / Produktion' },
-        { id: 'Pflege / Gesundheit', label: 'Pflege / Gesundheit' },
-        { id: 'Hotel / Gastro', label: 'Hotel / Gastro' },
-        { id: 'Dienstleister / B2B', label: 'Dienstleister / B2B' },
-        { id: 'Handel / E-Commerce', label: 'Handel / E-Commerce' },
-        { id: 'Sonstiges', label: 'Sonstiges' },
-      ],
+      options: BRANCHEN.map((b) => ({ id: b, label: b })),
     },
     { key: 'kontext', type: 'final' },
   ],
   sidebar: {
-    eyebrow: 'Empfehlung',
-    title: 'Dein Social-Media-Paket',
-    emptyHint: 'Beantworte die Fragen, dann empfehlen wir dir hier das passende Paket.',
+    eyebrow: 'Dein Paket',
+    title: 'Social-Media Betreuung',
+    emptyHint: 'Wähle deinen Content-Umfang, dann siehst du hier dein Paket und den Monatspreis.',
     inclText: 'Alle Pakete laufen monatlich und sind mit einem Monat zum Monatsende kündbar. 10 % Rabatt bei jährlicher Vorauszahlung. Alle Preise netto, zzgl. MwSt.',
   },
   result: {
@@ -245,18 +191,17 @@ const social = {
     sentText: 'Wir haben dir die Empfehlung mit Monatspreis und Leistungsumfang als PDF an deine E-Mail geschickt.',
   },
   computeBreakdown(a) {
-    if (!a.plattformen || !a.content || !a.ads) {
+    if (!a.paket || !PRICES.social[a.paket]) {
       return { ready: false, items: [], total_min: 0, total_max: 0, recurring: null };
     }
-    const tier = socialTier(a);
-    const pkg = PRICES.social[tier];
+    const pkg = PRICES.social[a.paket];
     return {
       ready: true,
       items: [], total_min: 0, total_max: 0,
       recurring: {
         label: pkg.label + '-Paket',
-        items: SOCIAL_INCL[tier].map((t) => ({ label: t })),
-        min: pkg.price, max: pkg.price, from: pkg.from,
+        items: pkg.incl.map((t) => ({ label: t })),
+        min: pkg.price, max: pkg.price, from: false,
         note: 'monatlich kündbar · 10 % Rabatt bei jährlicher Vorauszahlung',
       },
       type_label: 'Social-Media Betreuung · ' + pkg.label,

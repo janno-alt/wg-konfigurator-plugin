@@ -7,40 +7,35 @@ namespace WG\Konfigurator\Services;
  * Preis-Logik für die fokussierten Produkt-Konfiguratoren (recruiting, social).
  * MUSS synchron mit assets/quiz-app/src/productConfig.js gehalten werden.
  *
- * Liefert dieselbe Grund-Struktur wie PriceCalculator (preis_min/max, items,
- * score, drehtage, breakdown) plus wiederkehrende Felder:
- *   - monatlich_min / monatlich_max / monatlich_from / monatlich_note
- *   - paket_label
- *   - recurring_items[]  (Leistungs-Inklusiva, ohne Einzelpreis)
- *   - product
+ * Liefert die Grund-Struktur (preis_min/max, items, score, drehtage, breakdown)
+ * plus wiederkehrende Felder (monatlich_*, paket_label, recurring_items[], product).
  *
- * PREISE: zentral hier. Platzhalter mit "TODO PREIS" sind gemeinsam mit
- * Janno scharf zu stellen.
+ * Preise real (Stand 2026-06-27, von Janno bestätigt).
  */
 final class ProductPricing {
 
-    /* ---- Recruiting (TODO-Stellen markiert) ---- */
+    /* ---- Recruiting ---- */
     private const REC = [
-        'video_base_min' => 2000,   // real (bestehende Recruiting-Video-Logik)
-        'video_base_max' => 3000,   // real
-        'konzept'        => 800,    // real
-        'cutdowns_add'   => 600,    // real
-        'landingpage'    => 900,    // TODO PREIS bestätigen
-        'kampagne_monat' => 490,    // TODO PREIS bestätigen (exkl. Werbebudget)
-        'express_mult'   => 0.20,   // real
+        'video_base'     => 2000,   // 1 Stelle, inkl. Konzept
+        'stelle_add'     => 750,    // je weitere Stelle
+        'landingpage'    => 900,    // Bewerber-Landingpage (einmalig)
+        'kampagne_monat' => 250,    // Social-Recruiting-Betreuung mtl. (exkl. Werbebudget)
+        'express_mult'   => 0.20,
     ];
 
-    /* ---- Social-Pakete (real, von Seite 8142) ---- */
+    /* ---- Social-Pakete ---- */
     private const SOCIAL = [
-        'starter'     => [ 'price' => 300, 'from' => false, 'label' => 'Starter' ],
-        'standard'    => [ 'price' => 500, 'from' => false, 'label' => 'Standard' ],
-        'performance' => [ 'price' => 990, 'from' => true,  'label' => 'Performance' ],
+        'statisch' => [ 'price' => 300, 'label' => 'Statisch' ],
+        'reels4_q' => [ 'price' => 500, 'label' => 'Reels Basis' ],
+        'reels4_m' => [ 'price' => 700, 'label' => 'Reels Plus' ],
+        'reels8'   => [ 'price' => 990, 'label' => 'Reels Pro' ],
     ];
 
     private const SOCIAL_INCL = [
-        'starter'     => [ '1 Plattform', '8 Posts/Reels pro Monat', 'Community-Management (Mo-Fr)', 'Monatlicher Report' ],
-        'standard'    => [ 'bis 3 Plattformen', '16 Posts/Reels pro Monat', 'Werbeanzeigen-Betreuung', 'Community-Management', 'Monatlicher Report' ],
-        'performance' => [ 'alle 5 Plattformen', 'höchste Content-Frequenz', 'Meta + LinkedIn Ads (Setup & Optimierung)', 'erweiterte Service-Zeiten', 'monatlicher Strategie-Call' ],
+        'statisch' => [ '6 statische Beiträge pro Monat', 'Redaktionsplan & Texte', 'Community-Management', 'Monatlicher Report' ],
+        'reels4_q' => [ '4 Reels pro Monat', '1 Drehtag pro Quartal', 'Redaktionsplan, Schnitt & Veröffentlichung', 'Community-Management', 'Monatlicher Report' ],
+        'reels4_m' => [ '4 Reels pro Monat', 'Drehtag jeden Monat (frischer Content)', 'Redaktionsplan, Schnitt & Veröffentlichung', 'Community-Management', 'Monatlicher Report' ],
+        'reels8'   => [ '8 Reels pro Monat', '1 Drehtag alle 2 Monate', 'Redaktionsplan, Schnitt & Veröffentlichung', 'Community-Management', 'Monatlicher Report' ],
     ];
 
     /**
@@ -57,11 +52,13 @@ final class ProductPricing {
     private function calc_recruiting( array $quiz ): array {
         $P = self::REC;
         $items = [];
-        $items[] = [ 'key' => 'base',    'label' => 'Recruiting-Video (1 Drehtag)',                 'min' => $P['video_base_min'], 'max' => $P['video_base_max'] ];
-        $items[] = [ 'key' => 'konzept', 'label' => '+ Konzept-Workshop (Drehbuch, Drehplan)',      'min' => $P['konzept'],        'max' => $P['konzept'] ];
+        $items[] = [ 'key' => 'base', 'label' => 'Recruiting-Video inkl. Konzept', 'min' => $P['video_base'], 'max' => $P['video_base'] ];
 
-        if ( ( $quiz['rec_video'] ?? '' ) === 'paket' ) {
-            $items[] = [ 'key' => 'cutdowns', 'label' => '+ Kurz-Cutdowns für Anzeigen', 'min' => $P['cutdowns_add'], 'max' => $P['cutdowns_add'] ];
+        $stellen = (string) ( $quiz['stellen'] ?? '' );
+        if ( $stellen === '2-3' ) {
+            $items[] = [ 'key' => 'stellen', 'label' => '+ weitere Stelle (1 bis 2)', 'min' => $P['stelle_add'], 'max' => $P['stelle_add'] * 2 ];
+        } elseif ( $stellen === 'laufend' ) {
+            $items[] = [ 'key' => 'stellen', 'label' => '+ weitere Stellen (je +' . $P['stelle_add'] . ' €)', 'min' => $P['stelle_add'], 'max' => $P['stelle_add'] * 2 ];
         }
         if ( ( $quiz['rec_lp'] ?? '' ) === 'ja' ) {
             $items[] = [ 'key' => 'lp', 'label' => '+ Bewerber-Landingpage', 'min' => $P['landingpage'], 'max' => $P['landingpage'] ];
@@ -78,10 +75,9 @@ final class ProductPricing {
             $one_min += $em; $one_max += $ex; $express = $ex;
         }
 
-        $monat_min = 0; $monat_max = 0; $monat_note = ''; $recurring_items = [];
+        $monat = 0; $monat_note = ''; $recurring_items = [];
         if ( ( $quiz['rec_kampagne'] ?? '' ) === 'ja' ) {
-            $monat_min = $P['kampagne_monat'];
-            $monat_max = $P['kampagne_monat'];
+            $monat = $P['kampagne_monat'];
             $monat_note = 'monatliche Kampagnen-Betreuung, zzgl. Werbebudget (bestimmt ihr selbst)';
             $recurring_items = [ 'Anzeigen-Setup & Targeting', 'Laufende Optimierung der Kampagne', 'Reporting der Bewerbungen' ];
         }
@@ -89,63 +85,50 @@ final class ProductPricing {
         $score = 55
             + ( ( $quiz['rec_kampagne'] ?? '' ) === 'ja' ? 20 : 0 )
             + ( ( $quiz['rec_lp'] ?? '' ) === 'ja' ? 10 : 0 )
-            + ( ( $quiz['stellen'] ?? '' ) === 'laufend' ? 10 : 0 );
+            + ( $stellen === 'laufend' ? 10 : 0 );
 
         return [
-            'product'         => 'recruiting',
-            'preis_min'       => (int) $one_min,
-            'preis_max'       => (int) $one_max,
+            'product'           => 'recruiting',
+            'preis_min'         => (int) $one_min,
+            'preis_max'         => (int) $one_max,
             'express_aufschlag' => (int) $express,
-            'monatlich_min'   => (int) $monat_min,
-            'monatlich_max'   => (int) $monat_max,
-            'monatlich_from'  => true,
-            'monatlich_note'  => $monat_note,
-            'paket_label'     => 'Social-Recruiting-Kampagne',
-            'recurring_items' => $recurring_items,
-            'score'           => min( 100, $score ),
-            'drehtage'        => ( $quiz['rec_video'] ?? '' ) === 'paket' ? 1 : 1,
-            'items'           => $items,
-            'breakdown'       => [ 'product' => 'recruiting', 'video_typ' => 'recruiting' ],
+            'monatlich_min'     => (int) $monat,
+            'monatlich_max'     => (int) $monat,
+            'monatlich_from'    => false,
+            'monatlich_note'    => $monat_note,
+            'paket_label'       => 'Social-Recruiting-Kampagne',
+            'recurring_items'   => $recurring_items,
+            'score'             => min( 100, $score ),
+            'drehtage'          => 1,
+            'items'             => $items,
+            'breakdown'         => [ 'product' => 'recruiting', 'video_typ' => 'recruiting' ],
         ];
     }
 
     private function calc_social( array $quiz ): array {
-        $tier = $this->social_tier( $quiz );
-        $pkg  = self::SOCIAL[ $tier ];
+        $key = (string) ( $quiz['paket'] ?? '' );
+        if ( ! isset( self::SOCIAL[ $key ] ) ) {
+            $key = 'statisch';
+        }
+        $pkg = self::SOCIAL[ $key ];
 
-        $score = 50 + ( $tier === 'performance' ? 30 : ( $tier === 'standard' ? 20 : 10 ) )
-            + ( ( $quiz['ads'] ?? '' ) === 'ja' ? 10 : 0 );
+        $score = 50 + [ 'statisch' => 5, 'reels4_q' => 15, 'reels4_m' => 25, 'reels8' => 35 ][ $key ];
 
         return [
-            'product'         => 'social',
-            'preis_min'       => 0,
-            'preis_max'       => 0,
+            'product'           => 'social',
+            'preis_min'         => 0,
+            'preis_max'         => 0,
             'express_aufschlag' => 0,
-            'monatlich_min'   => (int) $pkg['price'],
-            'monatlich_max'   => (int) $pkg['price'],
-            'monatlich_from'  => (bool) $pkg['from'],
-            'monatlich_note'  => 'monatlich kündbar · 10 % Rabatt bei jährlicher Vorauszahlung',
-            'paket_label'     => $pkg['label'] . '-Paket',
-            'recurring_items' => self::SOCIAL_INCL[ $tier ],
-            'score'           => min( 100, $score ),
-            'drehtage'        => 0,
-            'items'           => [],
-            'breakdown'       => [ 'product' => 'social', 'tier' => $tier ],
+            'monatlich_min'     => (int) $pkg['price'],
+            'monatlich_max'     => (int) $pkg['price'],
+            'monatlich_from'    => false,
+            'monatlich_note'    => 'monatlich kündbar · 10 % Rabatt bei jährlicher Vorauszahlung',
+            'paket_label'       => $pkg['label'] . '-Paket',
+            'recurring_items'   => self::SOCIAL_INCL[ $key ],
+            'score'             => min( 100, $score ),
+            'drehtage'          => 0,
+            'items'             => [],
+            'breakdown'         => [ 'product' => 'social', 'paket' => $key ],
         ];
-    }
-
-    private function social_tier( array $quiz ): string {
-        $p = (string) ( $quiz['plattformen'] ?? '' );
-        $c = (string) ( $quiz['content'] ?? '' );
-        $a = (string) ( $quiz['ads'] ?? '' );
-
-        $tier = 'starter';
-        if ( $c === '16' || $p === '23' || $a === 'ja' ) {
-            $tier = 'standard';
-        }
-        if ( $p === '45' || $c === '20' || ( $a === 'ja' && ( $p === '23' || $c === '16' ) ) ) {
-            $tier = 'performance';
-        }
-        return $tier;
     }
 }

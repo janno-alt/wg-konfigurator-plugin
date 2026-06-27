@@ -48,10 +48,8 @@ $fmt = static fn( $n ) => number_format( (int) $n, 0, ',', '.' ) . ' €';
             <tr><td><strong>Kampagne</strong></td><td><?php echo ( $quiz['rec_kampagne'] ?? '' ) === 'ja' ? 'Ja' : 'Nein'; ?></td></tr>
             <tr><td><strong>Bewerber-LP</strong></td><td><?php echo ( $quiz['rec_lp'] ?? '' ) === 'ja' ? 'Ja' : 'Nein'; ?></td></tr>
         <?php else : ?>
-            <tr><td><strong>Empfohlenes Paket</strong></td><td><?php echo esc_html( (string) ( $pricing['paket_label'] ?? '–' ) ); ?></td></tr>
-            <tr><td><strong>Plattformen</strong></td><td><?php echo esc_html( (string) ( $quiz['plattformen'] ?? '–' ) ); ?></td></tr>
-            <tr><td><strong>Content/Monat</strong></td><td><?php echo esc_html( (string) ( $quiz['content'] ?? '–' ) ); ?></td></tr>
-            <tr><td><strong>Ads</strong></td><td><?php echo ( $quiz['ads'] ?? '' ) === 'ja' ? 'Ja' : 'Organisch'; ?></td></tr>
+            <tr><td><strong>Gewähltes Paket</strong></td><td><?php echo esc_html( (string) ( $pricing['paket_label'] ?? '–' ) ); ?></td></tr>
+            <tr><td><strong>Umfang-ID</strong></td><td><?php echo esc_html( (string) ( $quiz['paket'] ?? '–' ) ); ?></td></tr>
         <?php endif; ?>
         <tr><td><strong>Zeitrahmen</strong></td><td><?php echo esc_html( (string) ( $quiz['zeitrahmen'] ?? '–' ) ); ?></td></tr>
         <tr><td><strong>Branche</strong></td><td><?php echo esc_html( (string) ( $quiz['branche'] ?? '–' ) ); ?></td></tr>

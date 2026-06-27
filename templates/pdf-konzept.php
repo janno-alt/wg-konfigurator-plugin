@@ -223,9 +223,7 @@ $fmt_eur = static function ( $n ): string {
             <tr><td class="k">Zeitrahmen</td>       <td class="v"><?php echo esc_html( (string) ( $quiz['zeitrahmen'] ?: '–' ) ); ?></td></tr>
         <?php else : ?>
             <tr><td class="k">Branche</td>          <td class="v"><?php echo esc_html( (string) ( $quiz['branche'] ?: '–' ) ); ?></td></tr>
-            <tr><td class="k">Plattformen</td>      <td class="v"><?php echo esc_html( (string) ( $quiz['plattformen'] ?: '–' ) ); ?></td></tr>
-            <tr><td class="k">Content pro Monat</td><td class="v"><?php echo esc_html( (string) ( $quiz['content'] ?: '–' ) ); ?></td></tr>
-            <tr><td class="k">Werbeanzeigen</td>    <td class="v"><?php echo ( $quiz['ads'] ?? '' ) === 'ja' ? 'Ja' : 'Organisch'; ?></td></tr>
+            <tr><td class="k">Gewähltes Paket</td>  <td class="v"><?php echo esc_html( (string) ( $pricing['paket_label'] ?? '–' ) ); ?></td></tr>
         <?php endif; ?>
         <tr><td class="k">Website</td>       <td class="v"><?php echo esc_html( (string) ( $quiz['website'] ?: '–' ) ); ?></td></tr>
     </table>

@@ -338,9 +338,7 @@ final class GenerateEndpoint {
             'rec_kampagne' => sanitize_text_field( (string) ( $quiz_raw['rec_kampagne'] ?? '' ) ),
             'rec_lp'       => sanitize_text_field( (string) ( $quiz_raw['rec_lp'] ?? '' ) ),
             // Social
-            'plattformen'  => sanitize_text_field( (string) ( $quiz_raw['plattformen'] ?? '' ) ),
-            'content'      => sanitize_text_field( (string) ( $quiz_raw['content'] ?? '' ) ),
-            'ads'          => sanitize_text_field( (string) ( $quiz_raw['ads'] ?? '' ) ),
+            'paket'        => sanitize_text_field( (string) ( $quiz_raw['paket'] ?? '' ) ),
         ];
 
         $tracking = [
@@ -455,9 +453,7 @@ final class GenerateEndpoint {
         if ( $product === 'social' ) {
             return trim( implode( ' | ', array_filter( [
                 'Paket: ' . ( $pricing['paket_label'] ?? '' ),
-                'Plattformen: ' . ( $quiz['plattformen'] ?? '' ),
-                'Content/Monat: ' . ( $quiz['content'] ?? '' ),
-                'Ads: ' . ( $quiz['ads'] ?? '' ),
+                'Umfang: ' . ( $quiz['paket'] ?? '' ),
                 $quiz['ziel'] ?: '',
             ] ) ) );
         }
