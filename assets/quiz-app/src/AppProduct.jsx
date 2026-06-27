@@ -173,11 +173,6 @@ function FinalStep({ answers, set, lead, onBack, onSubmit, submitting, error }) 
             placeholder="z. B. eure-firma.de" value={answers.website}
             onChange={(e) => set('website', e.target.value)} />
         </label>
-        <label className="wgk__field">
-          <span>Was wir noch wissen sollten? (optional)</span>
-          <textarea rows={3} placeholder="z. B. konkrete Ziele, Besonderheiten, vorhandene Kanäle"
-            value={answers.ziel} onChange={(e) => set('ziel', e.target.value)} />
-        </label>
         <p className="wgk__note">Wir mailen die Einschätzung an <strong>{lead.email}</strong>. Alle Preise netto, zzgl. MwSt.</p>
         {error && <p className="wgk__error">{error}</p>}
       </div>

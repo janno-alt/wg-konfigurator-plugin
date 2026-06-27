@@ -42,8 +42,9 @@ $fmt = static fn( $n ) => number_format( (int) $n, 0, ',', '.' ) . ' €';
             <tr><td><strong>Features</strong></td><td><?php echo esc_html( $feat_lbl ? implode( ', ', $feat_lbl ) : 'Standard-Setup' ); ?></td></tr>
             <tr><td><strong>Drehtage (intern)</strong></td><td><?php echo (int) ( $pricing['drehtage'] ?? 1 ); ?></td></tr>
         <?php elseif ( $product === 'recruiting' ) : ?>
+            <?php $stellen_lbl = [ '1-2' => '1 bis 2 Stellen', '3plus' => 'ab 3 Stellen', 'dauerhaft' => 'dauerhaft mehrere' ][ (string) ( $quiz['stellen'] ?? '' ) ] ?? '–'; ?>
             <tr><td><strong>Berufsfeld</strong></td><td><?php echo esc_html( (string) ( $quiz['branche'] ?? '–' ) ); ?></td></tr>
-            <tr><td><strong>Offene Stellen</strong></td><td><?php echo esc_html( (string) ( $quiz['stellen'] ?? '–' ) ); ?></td></tr>
+            <tr><td><strong>Offene Stellen</strong></td><td><?php echo esc_html( $stellen_lbl ); ?></td></tr>
             <tr><td><strong>Video-Umfang</strong></td><td><?php echo esc_html( ( $quiz['rec_video'] ?? '' ) === 'paket' ? 'Video + Cutdowns' : 'Ein Video' ); ?></td></tr>
             <tr><td><strong>Kampagne</strong></td><td><?php echo ( $quiz['rec_kampagne'] ?? '' ) === 'ja' ? 'Ja' : 'Nein'; ?></td></tr>
             <tr><td><strong>Bewerber-LP</strong></td><td><?php echo ( $quiz['rec_lp'] ?? '' ) === 'ja' ? 'Ja' : 'Nein'; ?></td></tr>

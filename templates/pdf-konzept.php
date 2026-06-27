@@ -215,8 +215,9 @@ $fmt_eur = static function ( $n ): string {
             <?php endif; ?>
             <tr><td class="k">Zeitrahmen</td>    <td class="v"><?php echo esc_html( (string) ( $quiz['zeitrahmen'] ?? '–' ) ); ?></td></tr>
         <?php elseif ( $product === 'recruiting' ) : ?>
+            <?php $stellen_lbl = [ '1-2' => '1 bis 2 Stellen', '3plus' => 'ab 3 Stellen', 'dauerhaft' => 'dauerhaft mehrere' ][ (string) ( $quiz['stellen'] ?? '' ) ] ?? '–'; ?>
             <tr><td class="k">Berufsfeld</td>       <td class="v"><?php echo esc_html( (string) ( $quiz['branche'] ?: '–' ) ); ?></td></tr>
-            <tr><td class="k">Offene Stellen</td>   <td class="v"><?php echo esc_html( (string) ( $quiz['stellen'] ?: '–' ) ); ?></td></tr>
+            <tr><td class="k">Offene Stellen</td>   <td class="v"><?php echo esc_html( $stellen_lbl ); ?></td></tr>
             <tr><td class="k">Video-Umfang</td>     <td class="v"><?php echo esc_html( ( $quiz['rec_video'] ?? '' ) === 'paket' ? 'Video + Kurz-Cutdowns' : 'Ein Recruiting-Video' ); ?></td></tr>
             <tr><td class="k">Kampagne</td>         <td class="v"><?php echo ( $quiz['rec_kampagne'] ?? '' ) === 'ja' ? 'Social-Recruiting-Kampagne' : 'Nein'; ?></td></tr>
             <tr><td class="k">Bewerber-Landingpage</td><td class="v"><?php echo ( $quiz['rec_lp'] ?? '' ) === 'ja' ? 'Ja' : 'Nein'; ?></td></tr>

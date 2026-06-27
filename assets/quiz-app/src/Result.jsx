@@ -18,7 +18,7 @@ export default function Result({ data, meetingUrl, theme, resultCopy }) {
       {hasOneOff && (
         <div className="wgk__pricebox">
           <span className="wgk__pricebox-label">{hasMonthly ? 'Einmalig' : 'Investitionsrahmen'}</span>
-          <strong className="wgk__pricebox-value">{fmt(data.preis_min)} – {fmt(data.preis_max)}</strong>
+          <strong className="wgk__pricebox-value">{data.preis_min === data.preis_max ? fmt(data.preis_min) : `${fmt(data.preis_min)} – ${fmt(data.preis_max)}`}</strong>
           {data.express_aufschlag > 0 && (
             <span className="wgk__pricebox-note">inkl. Express-Aufschlag {fmt(data.express_aufschlag)}</span>
           )}

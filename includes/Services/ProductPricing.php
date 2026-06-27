@@ -51,15 +51,23 @@ final class ProductPricing {
 
     private function calc_recruiting( array $quiz ): array {
         $P = self::REC;
-        $items = [];
-        $items[] = [ 'key' => 'base', 'label' => 'Recruiting-Video inkl. Konzept', 'min' => $P['video_base'], 'max' => $P['video_base'] ];
-
         $stellen = (string) ( $quiz['stellen'] ?? '' );
-        if ( $stellen === '2-3' ) {
-            $items[] = [ 'key' => 'stellen', 'label' => '+ weitere Stelle (1 bis 2)', 'min' => $P['stelle_add'], 'max' => $P['stelle_add'] * 2 ];
-        } elseif ( $stellen === 'laufend' ) {
-            $items[] = [ 'key' => 'stellen', 'label' => '+ weitere Stellen (je +' . $P['stelle_add'] . ' €)', 'min' => $P['stelle_add'], 'max' => $P['stelle_add'] * 2 ];
+        $triple  = $P['video_base'] + 2 * $P['stelle_add']; // ab 3 Stellen
+
+        $base_min   = $P['video_base'];
+        $base_max   = $P['video_base'] + $P['stelle_add'];
+        $base_label = 'Recruiting-Video inkl. Konzept (1 bis 2 Stellen)';
+        if ( $stellen === '3plus' ) {
+            $base_min = $base_max = $triple;
+            $base_label = 'Recruiting-Video inkl. Konzept (ab 3 Stellen, je weitere +750 €)';
+        } elseif ( $stellen === 'dauerhaft' ) {
+            $base_min = $base_max = $triple;
+            $base_label = 'Recruiting-Video inkl. Konzept (dauerhaft, Volumen-Paket ab)';
         }
+
+        $items = [];
+        $items[] = [ 'key' => 'base', 'label' => $base_label, 'min' => $base_min, 'max' => $base_max ];
+
         if ( ( $quiz['rec_lp'] ?? '' ) === 'ja' ) {
             $items[] = [ 'key' => 'lp', 'label' => '+ Bewerber-Landingpage', 'min' => $P['landingpage'], 'max' => $P['landingpage'] ];
         }
@@ -85,7 +93,7 @@ final class ProductPricing {
         $score = 55
             + ( ( $quiz['rec_kampagne'] ?? '' ) === 'ja' ? 20 : 0 )
             + ( ( $quiz['rec_lp'] ?? '' ) === 'ja' ? 10 : 0 )
-            + ( $stellen === 'laufend' ? 10 : 0 );
+            + ( in_array( $stellen, [ '3plus', 'dauerhaft' ], true ) ? 10 : 0 );
 
         return [
             'product'           => 'recruiting',

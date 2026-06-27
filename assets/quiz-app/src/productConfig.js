@@ -65,9 +65,9 @@ const recruiting = {
       title: 'Wie viele Stellen wollt ihr besetzen?',
       subtitle: 'Basis ist eine Stelle inkl. Konzept. Jede weitere Stelle kostet 750 € extra.',
       options: [
-        { id: '1', label: '1 Stelle', hint: 'Eine konkrete Position' },
-        { id: '2-3', label: '2 bis 3 Stellen', hint: 'Mehrere Positionen, gemeinsamer Drehtag' },
-        { id: 'laufend', label: 'Laufend / mehrere', hint: 'Ihr stellt dauerhaft ein' },
+        { id: '1-2', label: '1 bis 2 Stellen', hint: 'Ein oder zwei konkrete Positionen' },
+        { id: '3plus', label: 'Ab 3 Stellen', hint: 'Mehrere Positionen, gemeinsamer Drehtag' },
+        { id: 'dauerhaft', label: 'Dauerhaft mehrere Stellen', hint: 'Ihr stellt laufend ein, individuelles Volumen-Paket' },
       ],
     },
     {
@@ -111,14 +111,16 @@ const recruiting = {
   },
   computeBreakdown(a) {
     const P = PRICES.recruiting;
+    const triple = P.video_base + 2 * P.stelle_add; // ab 3 Stellen
+    const STELLEN = {
+      '1-2':       { min: P.video_base, max: P.video_base + P.stelle_add, label: 'Recruiting-Video inkl. Konzept (1 bis 2 Stellen)' },
+      '3plus':     { min: triple, max: triple, label: 'Recruiting-Video inkl. Konzept (ab 3 Stellen, je weitere +750 €)' },
+      'dauerhaft': { min: triple, max: triple, label: 'Recruiting-Video inkl. Konzept (dauerhaft, Volumen-Paket ab)' },
+    };
+    const base = STELLEN[a.stellen] || STELLEN['1-2'];
     const items = [];
-    items.push({ key: 'base', label: 'Recruiting-Video inkl. Konzept', min: P.video_base, max: P.video_base });
+    items.push({ key: 'base', label: base.label, min: base.min, max: base.max });
 
-    if (a.stellen === '2-3') {
-      items.push({ key: 'stellen', label: '+ weitere Stelle (1 bis 2)', min: P.stelle_add, max: P.stelle_add * 2 });
-    } else if (a.stellen === 'laufend') {
-      items.push({ key: 'stellen', label: `+ weitere Stellen (je +${P.stelle_add} €)`, min: P.stelle_add, max: P.stelle_add * 2 });
-    }
     if (a.rec_lp === 'ja') {
       items.push({ key: 'lp', label: '+ Bewerber-Landingpage', min: P.landingpage, max: P.landingpage });
     }
