@@ -165,6 +165,28 @@ final class SettingsPage {
                     </tr>
                 </table>
 
+                <h2 class="title"><?php esc_html_e( 'MailPoet-Newsletter', 'wg-konfigurator' ); ?></h2>
+                <table class="form-table" role="presentation">
+                    <tr>
+                        <th scope="row"><label for="mailpoet_list_id"><?php esc_html_e( 'Newsletter-Liste', 'wg-konfigurator' ); ?></label></th>
+                        <td>
+                            <?php if ( \WG\Konfigurator\Services\MailPoetSync::is_available() ) :
+                                $mp_lists = \WG\Konfigurator\Services\MailPoetSync::lists(); ?>
+                                <select id="mailpoet_list_id" name="<?php echo esc_attr( Settings::OPTION_KEY ); ?>[mailpoet_list_id]">
+                                    <option value="0" <?php selected( (int) $s['mailpoet_list_id'], 0 ); ?>><?php esc_html_e( '— Kein Eintrag (deaktiviert) —', 'wg-konfigurator' ); ?></option>
+                                    <?php foreach ( $mp_lists as $lid => $lname ) : ?>
+                                        <option value="<?php echo esc_attr( (string) $lid ); ?>" <?php selected( (int) $s['mailpoet_list_id'], (int) $lid ); ?>><?php echo esc_html( $lname ); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <p class="description"><?php esc_html_e( 'Leads mit gesetzter Newsletter-Checkbox werden in diese Liste eingetragen. Den Double-Opt-in (Bestätigungsmail + Nachweis) übernimmt MailPoet — bitte unter MailPoet → Einstellungen die Anmeldebestätigung aktiviert lassen.', 'wg-konfigurator' ); ?></p>
+                            <?php else : ?>
+                                <input type="hidden" name="<?php echo esc_attr( Settings::OPTION_KEY ); ?>[mailpoet_list_id]" value="<?php echo esc_attr( (string) $s['mailpoet_list_id'] ); ?>" />
+                                <p class="description" style="color:#b32d2e;"><?php esc_html_e( 'MailPoet ist nicht aktiv. Aktiviere das MailPoet-Plugin, dann erscheint hier die Listen-Auswahl.', 'wg-konfigurator' ); ?></p>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                </table>
+
                 <h2 class="title"><?php esc_html_e( 'Sicherheit', 'wg-konfigurator' ); ?></h2>
                 <table class="form-table" role="presentation">
                     <tr>

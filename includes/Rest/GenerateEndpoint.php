@@ -291,6 +291,8 @@ final class GenerateEndpoint {
                 ) );
             }
 
+            $this->maybe_mailpoet( $lead );
+
         } catch ( Throwable $e ) {
             error_log( '[wg-konfigurator] Pipeline-Fehler: ' . $e->getMessage() );
             return new WP_Error(
@@ -428,6 +430,8 @@ final class GenerateEndpoint {
                     $webhook_result['attempts']
                 ) );
             }
+
+            $this->maybe_mailpoet( $lead );
         } catch ( Throwable $e ) {
             error_log( '[wg-konfigurator] Produkt-Pipeline-Fehler: ' . $e->getMessage() );
             return new WP_Error( 'pipeline_error', 'Etwas ist schiefgelaufen. Wir wurden benachrichtigt.', [ 'status' => 500 ] );
@@ -447,6 +451,25 @@ final class GenerateEndpoint {
             'paket_label'       => $pricing['paket_label'],
             'naechste_schritte' => $concept['naechste_schritte'] ?? '',
         ], 200 );
+    }
+
+    /** Trägt einwilligende Leads (marketing_opt_in) in die MailPoet-Liste ein – DOI macht MailPoet. */
+    private function maybe_mailpoet( array $lead ): void {
+        if ( empty( $lead['marketing_opt_in'] ) ) {
+            return;
+        }
+        $list_id = (int) ( \WG\Konfigurator\Admin\Settings::get()['mailpoet_list_id'] ?? 0 );
+        if ( $list_id <= 0 ) {
+            return;
+        }
+        try {
+            $res = \WG\Konfigurator\Services\MailPoetSync::subscribe( $lead, $list_id );
+            if ( ! $res['ok'] ) {
+                error_log( '[wg-konfigurator] MailPoet: ' . $res['status'] . ' – ' . $res['message'] );
+            }
+        } catch ( \Throwable $e ) {
+            error_log( '[wg-konfigurator] MailPoet-Exception: ' . $e->getMessage() );
+        }
     }
 
     /** Kurz-Zusammenfassung der Produkt-Konfiguration fürs CRM-Freitextfeld. */

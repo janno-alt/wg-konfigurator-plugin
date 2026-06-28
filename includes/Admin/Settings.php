@@ -41,6 +41,9 @@ final class Settings {
             'webhook_secret'   => '',
             'webhook_timeout'  => 8,
 
+            // MailPoet-Newsletter (0 = aus). Bei Opt-in wird der Lead in diese Liste eingetragen.
+            'mailpoet_list_id' => 0,
+
             // Update-Checker
             'github_token'     => '',
 
@@ -111,6 +114,7 @@ final class Settings {
                 case 'webhook_timeout':
                 case 'rate_limit_per_h':
                 case 'gemini_max_input':
+                case 'mailpoet_list_id':
                     $out[ $key ] = max( 0, (int) $val );
                     break;
 
