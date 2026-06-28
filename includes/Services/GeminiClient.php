@@ -144,7 +144,26 @@ final class GeminiClient {
     private function product_system_prompt( string $product ): string {
         $rolle = $product === 'social'
             ? 'Senior-Social-Media-Stratege bei WG-Digital. Du betreust laufend Social-Media-Kanäle (Instagram, Facebook, LinkedIn, TikTok) für KMU in Mitteldeutschland.'
-            : 'Senior-Recruiting-Stratege bei WG-Digital. Du gewinnst für KMU in Mitteldeutschland mit Recruiting-Videos und Social-Recruiting-Kampagnen passende Bewerber.';
+            : 'Senior-Employer-Branding- und Recruiting-Stratege bei WG-Digital. Du hilfst KMU in Mitteldeutschland, mit Recruiting-Videos und Social-Recruiting-Kampagnen die richtigen Bewerber:innen zu gewinnen.';
+
+        $extra = '';
+        if ( $product === 'recruiting' ) {
+            $extra = <<<TEXT
+
+EMPLOYER-BRANDING-FOKUS (für Recruiting absolut kritisch):
+5. Zielgruppe des gesamten Konzepts sind potenzielle MITARBEITENDE, nicht Kunden.
+   Alles wird aus Sicht von Bewerber:innen gedacht.
+6. Es geht ausschließlich darum, warum man bei diesem Arbeitgeber ARBEITEN will:
+   Team und Kolleg:innen, Führung auf Augenhöhe, echter Arbeitsalltag, Entwicklung
+   und Aufstieg, Sicherheit, Arbeitszeit-/Schichtmodelle, Wertschätzung, Ausstattung,
+   Sinn der Arbeit, Onboarding.
+7. STRENG VERBOTEN sind Vertriebs- und Marktargumente: NICHT "Komplettanbieter",
+   KEINE Wettbewerbsvorteile, NICHT "löst Kundenprobleme", KEINE Kundenerfolge /
+   Anfragen / Sichtbarkeit, NICHT wie das Unternehmen Kunden gewinnt oder sich gegen
+   Wettbewerber positioniert. Das ist für Bewerber irrelevant und gehört nicht ins Konzept.
+TEXT;
+        }
+
         return <<<TEXT
 Du bist {$rolle}
 
@@ -156,7 +175,7 @@ REGELN (kritisch):
 2. Wenn Website-Daten leer sind: aus Branche + Zielen Hypothesen ableiten und als
    "vermutlich…" / "wir nehmen an…" kennzeichnen.
 3. NIEMALS Em-Dashes (—) verwenden. Stattdessen Komma, Doppelpunkt oder Punkt.
-4. Antworte ausschließlich im vorgegebenen JSON-Schema, keine Markdown-Umrandung.
+4. Antworte ausschließlich im vorgegebenen JSON-Schema, keine Markdown-Umrandung.{$extra}
 TEXT;
     }
 
@@ -191,15 +210,17 @@ TEXT;
                  . '- Bewerber-Landingpage: ' . (string) ( $quiz['rec_lp'] ?? '' ) . "\n"
                  . "- Freitext: {$ziel}\n";
             $felder = <<<TEXT
-Fülle die Felder für ein RECRUITING-VIDEO mit optionaler Social-Recruiting-Kampagne:
-- "wirkungs_hypothese": 1 Satz, welche Bewerber:innen sich nach dem Sehen melden sollen.
-- "typ_empfehlung_begruendung": warum dieses Recruiting-Setup für die Branche passt.
-- "unternehmens_analyse": 3-5 Sätze, was diesen Arbeitgeber attraktiv macht.
-- "video_botschaften": 4-6 konkrete Punkte, die im Recruiting-Video gezeigt werden sollten.
-- "marketing_strategie": 3-5 Sätze zur Ausspielung (Kanäle, Targeting, Bewerber-Landingpage, Messung).
-- "empfohlene_protagonisten": 2-3 echte Rollen aus dem Team vor der Kamera.
-- "empfohlene_locations": 2-3 konkrete Drehorte im Betrieb.
-- "vorbereitungs_checkliste": 5-6 konkrete Action-Steps (mit Verb beginnend).
+Fülle die Felder für ein RECRUITING-VIDEO (Ziel: passende BEWERBER:INNEN gewinnen).
+Durchgängig aus Sicht potenzieller Mitarbeitender, NICHT aus Vertriebssicht.
+Employer Branding, keine Verkaufs-/Markt-/Kundenargumente:
+- "wirkungs_hypothese": 1 Satz, welche Bewerber:innen sich nach dem Sehen angesprochen fühlen und melden sollen ("… sehen sich im Team wieder und melden sich").
+- "typ_empfehlung_begruendung": 3-5 Sätze, warum ein Recruiting-Video das richtige Mittel ist, um für die offenen Stellen dieser Branche genau diese Zielgruppe zu erreichen (NICHT warum das Unternehmen am Markt gut ist).
+- "unternehmens_analyse": 3-5 Sätze NUR zur ARBEITGEBER-Attraktivität: Was macht diesen Betrieb zu einem guten Arbeitsplatz (Team, Kultur, Führung, Entwicklung, Sicherheit, Ausstattung, Arbeitsalltag, Benefits)? KEINE Vertriebs-, Markt- oder Kundenargumente.
+- "video_botschaften": 4-6 konkrete Punkte, die im Recruiting-Video gezeigt werden sollten, damit sich passende Leute bewerben (echter Arbeitsalltag, O-Töne echter Kolleg:innen, Führung zum Anfassen, konkrete Benefits/Schichtmodelle/Entwicklungswege). KEINE Kundenerfolge, KEINE Verkaufsbotschaften.
+- "marketing_strategie": 3-5 Sätze zur Ausspielung an die Bewerber-Zielgruppe (Kanäle, Targeting auf passende Profile in der Region, Bewerber-Landingpage, wie Bewerbungen gemessen werden).
+- "empfohlene_protagonisten": 2-3 echte Rollen aus dem Team, die Bewerber überzeugen (z. B. ein:e Mitarbeiter:in aus dem Zielberuf, Teamleitung). Format: "Rolle, warum sie für Bewerber glaubwürdig ist".
+- "empfohlene_locations": 2-3 konkrete Drehorte im Betrieb, die den echten Arbeitsalltag zeigen. Mit kurzer Begründung.
+- "vorbereitungs_checkliste": 5-6 konkrete Action-Steps (mit Verb beginnend), passend zum Recruiting-Dreh.
 - "naechste_schritte": 2-3 Sätze mit Zeitangabe.
 TEXT;
         }

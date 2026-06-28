@@ -42,6 +42,8 @@ final class PdfGenerator {
         $dompdf->loadHtml( $html, 'UTF-8' );
         $dompdf->render();
 
+        $this->add_footer( $dompdf );
+
         $output = $dompdf->output();
         if ( $output === '' ) {
             throw new RuntimeException( 'PDF-Output ist leer.' );
@@ -68,6 +70,28 @@ final class PdfGenerator {
             'url'      => $url_base . '/' . $filename,
             'filename' => $filename,
         ];
+    }
+
+    /**
+     * Footer auf JEDER Seite via Canvas (deferred page_text/line) – verrutscht
+     * nicht bei Inhalts-Überlauf und numeriert die Seiten automatisch korrekt.
+     */
+    private function add_footer( Dompdf $dompdf ): void {
+        $canvas = $dompdf->getCanvas();
+        $fm     = $dompdf->getFontMetrics();
+        $font   = $fm->getFont( 'DejaVu Sans', 'normal' );
+        if ( ! $font ) { return; }
+
+        $w    = $canvas->get_width();
+        $h    = $canvas->get_height();
+        $mx   = 62.0;            // ~22mm Seitenrand
+        $y    = $h - 36.0;       // ~12mm vom unteren Rand
+        $grey = [ 0.55, 0.55, 0.55 ];
+        $date = wp_date( 'd.m.Y' );
+
+        $canvas->line( $mx, $y - 8.0, $w - $mx, $y - 8.0, [ 0.20, 0.20, 0.20 ], 0.5 );
+        $canvas->page_text( $mx, $y, 'Konzept ' . $date, $font, 8.0, $grey );
+        $canvas->page_text( $w - $mx - 78.0, $y, 'Seite {PAGE_NUM} / {PAGE_COUNT}', $font, 8.0, $grey );
     }
 
     private function build_filename( array $ctx ): string {

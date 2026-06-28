@@ -42,21 +42,25 @@ $fmt_eur = static function ( $n ): string {
 <title><?php echo esc_html( $doc_title ); ?> – <?php echo esc_html( $lead['vorname'] ?? 'Kunde' ); ?></title>
 <style>
     @page { margin: 0; size: A4 portrait; }
+    /* dompdf: html-Background füllt JEDE Seite zuverlässig (body-bg hat Macken). */
+    html { background-color: <?php echo esc_attr( $bg ); ?>; }
     body, html { margin: 0; padding: 0; }
 
     .page {
         page-break-after: always;
-        padding: 28mm 22mm 22mm;
+        padding: 26mm 22mm 30mm;   /* unten extra Platz für den Canvas-Footer */
         background-color: <?php echo esc_attr( $bg ); ?>;
         color: #FBFBFB;
         font-family: 'DejaVu Sans', sans-serif;
         font-size: 11pt;
         line-height: 1.55;
         position: relative;
-        height: 247mm;     /* A4 = 297mm; minus 50mm padding = 247mm Content-Höhe */
-        overflow: hidden;
     }
     .page:last-child { page-break-after: auto; }
+
+    /* Blöcke nicht über Seitenumbrüche zerreißen */
+    .pricebox, table.kv { page-break-inside: avoid; }
+    h2, h3 { page-break-after: avoid; }
 
     .accent { color: <?php echo esc_attr( $brand ); ?>; }
     .accent-bar {
@@ -127,10 +131,6 @@ $fmt_eur = static function ( $n ): string {
     <div class="cover-meta">
         WG-Digital · Videomarketing aus Mitteldeutschland<br>
         <?php echo esc_html( $ctx['settings']['sender_email'] ?? '' ); ?>
-    </div>
-    <div class="footer">
-        Konzept <?php echo esc_html( $today ); ?>
-        <span class="right">Seite 1</span>
     </div>
 </div>
 
@@ -229,10 +229,6 @@ $fmt_eur = static function ( $n ): string {
         <tr><td class="k">Website</td>       <td class="v"><?php echo esc_html( (string) ( $quiz['website'] ?: '–' ) ); ?></td></tr>
     </table>
 
-    <div class="footer">
-        Konzept <?php echo esc_html( $today ); ?>
-        <span class="right">Seite 2</span>
-    </div>
 </div>
 
 <!-- ============== SEITE 3 NEU v0.9: Warum dieser Video-Typ ============== -->
@@ -251,10 +247,6 @@ $fmt_eur = static function ( $n ): string {
         </p>
     <?php endif; ?>
 
-    <div class="footer">
-        Konzept <?php echo esc_html( $today ); ?>
-        <span class="right">Seite 3</span>
-    </div>
 </div>
 <?php endif; ?>
 
@@ -283,7 +275,7 @@ $fmt_eur = static function ( $n ): string {
                style="color:<?php echo esc_attr( $brand ); ?>;font-weight:700;">cal.meetergo.com/janno-fleischer</a>
         </p>
     <?php else : ?>
-        <h2>Was dich auszeichnet</h2>
+        <h2><?php echo $product === 'recruiting' ? 'Was euch als Arbeitgeber auszeichnet' : 'Was dich auszeichnet'; ?></h2>
         <p style="line-height:1.7;">
             <?php echo nl2br( esc_html( (string) ( $concept['unternehmens_analyse'] ?? '–' ) ) ); ?>
         </p>
@@ -296,10 +288,6 @@ $fmt_eur = static function ( $n ): string {
         </ul>
     <?php endif; ?>
 
-    <div class="footer">
-        Konzept <?php echo esc_html( $today ); ?>
-        <span class="right">Seite 3</span>
-    </div>
 </div>
 
 <!-- ============== SEITE 4: Protagonist:innen + Locations ============== -->
@@ -321,10 +309,6 @@ $fmt_eur = static function ( $n ): string {
         <?php endforeach; ?>
     </ul>
 
-    <div class="footer">
-        Konzept <?php echo esc_html( $today ); ?>
-        <span class="right">Seite 4</span>
-    </div>
 </div>
 
 <!-- ============== SEITE 5: Vorbereitungs-Checkliste ============== -->
@@ -341,10 +325,6 @@ $fmt_eur = static function ( $n ): string {
     <h3 style="margin-top:24pt;">So geht's weiter</h3>
     <p><?php echo esc_html( (string) ( $concept['naechste_schritte'] ?? '–' ) ); ?></p>
 
-    <div class="footer">
-        Konzept <?php echo esc_html( $today ); ?>
-        <span class="right">Seite 5</span>
-    </div>
 </div>
 
 <?php if ( $is_video ) : ?>
@@ -369,10 +349,6 @@ $fmt_eur = static function ( $n ): string {
         <li>Rohmaterial auf Anfrage</li>
     </ul>
 
-    <div class="footer">
-        Konzept <?php echo esc_html( $today ); ?>
-        <span class="right">Seite 6</span>
-    </div>
 </div>
 
 <?php endif; /* /Video-only Ablauf */ ?>
@@ -394,10 +370,6 @@ $fmt_eur = static function ( $n ): string {
     <h3>Eigenes Profi-Equipment</h3>
     <p>Profi-Kamera, Slider, Licht, Funkmikrofone – wir bringen alles mit und richten direkt vor Ort ein.</p>
 
-    <div class="footer">
-        Konzept <?php echo esc_html( $today ); ?>
-        <span class="right">Seite 7</span>
-    </div>
 </div>
 
 <?php endif; /* /Video-only Warum-WG */ ?>
@@ -428,10 +400,6 @@ $fmt_eur = static function ( $n ): string {
         <tr><td class="k">Web</td><td class="v">wg-digitalmarketing.de</td></tr>
     </table>
 
-    <div class="footer">
-        Konzept <?php echo esc_html( $today ); ?>
-        <span class="right">Seite 8</span>
-    </div>
 </div>
 
 </body>
