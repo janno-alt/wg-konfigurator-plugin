@@ -91,6 +91,7 @@ final class GenerateEndpoint {
             'vorname'          => $vorname,
             'nachname'         => $nachname,
             'email'            => sanitize_email( (string) ( $lead['email'] ?? '' ) ),
+            'telefon'          => sanitize_text_field( (string) ( $lead['telefon'] ?? '' ) ),
             'dsgvo_opt_in'     => ! empty( $lead['dsgvo_opt_in'] ),
             'marketing_opt_in' => ! empty( $lead['marketing_opt_in'] ),
         ];

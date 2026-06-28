@@ -24,7 +24,10 @@ $fmt = static fn( $n ) => number_format( (int) $n, 0, ',', '.' ) . ' €';
     <table cellpadding="4" cellspacing="0" style="font-size:13px;border-collapse:collapse;">
         <tr><td><strong>Name</strong></td><td><?php echo esc_html( $lead['name'] ?? ( $lead['vorname'] ?? '' ) ); ?></td></tr>
         <tr><td><strong>E-Mail</strong></td><td><a href="mailto:<?php echo esc_attr( $lead['email'] ?? '' ); ?>"><?php echo esc_html( $lead['email'] ?? '' ); ?></a></td></tr>
-        <tr><td><strong>Marketing-Opt-In</strong></td><td><?php echo ! empty( $lead['marketing_opt_in'] ) ? 'Ja' : 'Nein'; ?></td></tr>
+        <?php if ( ! empty( $lead['telefon'] ) ) : ?>
+        <tr><td><strong>Telefon</strong></td><td><a href="tel:<?php echo esc_attr( preg_replace( '/[^0-9+]/', '', (string) $lead['telefon'] ) ); ?>"><?php echo esc_html( $lead['telefon'] ); ?></a> <em style="color:#888;">(freiwillig angegeben &rarr; Anruf erwünscht)</em></td></tr>
+        <?php endif; ?>
+        <tr><td><strong>Newsletter-Opt-In</strong></td><td><?php echo ! empty( $lead['marketing_opt_in'] ) ? 'Ja (Einwilligung erteilt)' : 'Nein'; ?></td></tr>
     </table>
 
     <?php $product = (string) ( $quiz['product'] ?? 'video' ); ?>

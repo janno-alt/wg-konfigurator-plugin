@@ -41,6 +41,7 @@ export default function App({ theme = 'dark', product = 'video' }) {
   const [lead, setLead] = useState({
     name: '',
     email: '',
+    telefon: '',
     dsgvo_opt_in: false,
     marketing_opt_in: false,
   });

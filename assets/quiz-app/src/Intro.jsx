@@ -82,13 +82,27 @@ export default function Intro({ lead, setLead, onStart, starting, error, copy })
           )}
         </label>
 
+        <label className="wgk__field">
+          <span>Telefon <span style={{ color: '#9a9a9a', fontWeight: 400 }}>(optional)</span></span>
+          <input
+            type="tel"
+            value={lead.telefon || ''}
+            onChange={(e) => setLead({ ...lead, telefon: e.target.value })}
+            placeholder="0151 23456789"
+            autoComplete="tel"
+          />
+          <span style={{ display: 'block', marginTop: '4px', fontSize: '12px', color: '#9a9a9a' }}>
+            Nur falls du lieber direkt sprichst — wir rufen nicht ungefragt an.
+          </span>
+        </label>
+
         <label className="wgk__check wgk__intro-optin">
           <input
             type="checkbox"
             checked={!!lead.marketing_opt_in}
             onChange={(e) => setLead({ ...lead, marketing_opt_in: e.target.checked })}
           />
-          <span>Optional: Updates zu Videomarketing-Tipps von WG-Digital (jederzeit abbestellbar).</span>
+          <span>Ja, schickt mir gelegentlich Praxis-Tipps und Angebote von WG-Digital per E-Mail (Newsletter, jederzeit abbestellbar).</span>
         </label>
 
         <button
