@@ -312,7 +312,10 @@ final class GenerateEndpoint {
             // dataLayer-Tracking (gehashte PII + Conversion-Wert) für GTM/Microsoft Ads.
             'tracking'          => [
                 'user_data' => $this->tracking_user_data( $lead ),
-                'value'     => (int) ( $pricing['preis_min'] ?? 0 ),
+                // Fester Pauschalwert 1 pro Lead → Microsoft Ads optimiert auf
+                // Lead-Menge statt auf gemischte Einmal-/Monatspreise. Der echte
+                // Wert bleibt im konfigurator_completed-Event + im PDF/CRM.
+                'value'     => 1,
                 'currency'  => 'EUR',
             ],
         ], 200 );
@@ -444,12 +447,6 @@ final class GenerateEndpoint {
             return new WP_Error( 'pipeline_error', 'Etwas ist schiefgelaufen. Wir wurden benachrichtigt.', [ 'status' => 500 ] );
         }
 
-        // Conversion-Wert: Recruiting = einmaliger "ab"-Preis, Social = Monatspreis (inkl. Zusatz).
-        $track_value = (int) ( $pricing['preis_min'] ?? 0 );
-        if ( $track_value <= 0 ) {
-            $track_value = (int) ( $pricing['monatlich_gesamt'] ?? $pricing['monatlich_min'] ?? 0 );
-        }
-
         return new WP_REST_Response( [
             'ok'                => true,
             'product'           => $product,
@@ -466,7 +463,10 @@ final class GenerateEndpoint {
             // dataLayer-Tracking (gehashte PII + Conversion-Wert) für GTM/Microsoft Ads.
             'tracking'          => [
                 'user_data' => $this->tracking_user_data( $lead ),
-                'value'     => $track_value,
+                // Fester Pauschalwert 1 pro Lead → Microsoft Ads optimiert auf
+                // Lead-Menge statt auf gemischte Einmal-/Monatspreise. Der echte
+                // Wert bleibt im konfigurator_completed-Event + im PDF/CRM.
+                'value'     => 1,
                 'currency'  => 'EUR',
             ],
         ], 200 );
