@@ -40,7 +40,9 @@ export default function AppProduct({ theme = 'dark', product }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': config.nonce },
         body: JSON.stringify({
-          lead: { email: lead.email, dsgvo_opt_in: lead.dsgvo_opt_in, marketing_opt_in: lead.marketing_opt_in },
+          // dsgvo_opt_in hartkodiert true: Klick auf Start = Einwilligung (Intro-Legaltext);
+          // das setLead aus dem Intro ist in diesem Tick noch nicht propagiert.
+          lead: { email: lead.email, dsgvo_opt_in: true, marketing_opt_in: lead.marketing_opt_in },
           tracking: config.tracking || {},
           product,
         }),

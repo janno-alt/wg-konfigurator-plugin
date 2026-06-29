@@ -100,7 +100,9 @@ export default function App({ theme = 'dark', product = 'video' }) {
         body: JSON.stringify({
           lead: {
             email: lead.email,
-            dsgvo_opt_in: lead.dsgvo_opt_in,
+            // Klick auf "Konfigurator starten" = DSGVO-Einwilligung (siehe Intro-Legaltext).
+            // Hartkodiert true, weil das setLead aus dem Intro hier noch nicht propagiert ist.
+            dsgvo_opt_in: true,
             marketing_opt_in: lead.marketing_opt_in,
           },
           tracking: config.tracking || {},
