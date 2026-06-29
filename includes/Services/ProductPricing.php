@@ -32,10 +32,17 @@ final class ProductPricing {
     ];
 
     private const SOCIAL_INCL = [
-        'statisch' => [ '6 statische Beiträge pro Monat', 'Redaktionsplan & Texte', 'Community-Management', 'Monatlicher Report' ],
-        'reels4_q' => [ '4 Reels pro Monat', '1 Drehtag pro Quartal', 'Redaktionsplan, Schnitt & Veröffentlichung', 'Community-Management', 'Monatlicher Report' ],
-        'reels4_m' => [ '4 Reels pro Monat', 'Drehtag jeden Monat (frischer Content)', 'Redaktionsplan, Schnitt & Veröffentlichung', 'Community-Management', 'Monatlicher Report' ],
-        'reels8'   => [ '8 Reels pro Monat', '1 Drehtag alle 2 Monate', 'Redaktionsplan, Schnitt & Veröffentlichung', 'Community-Management', 'Monatlicher Report' ],
+        'statisch' => [ '6 statische Beiträge pro Monat', 'Redaktionsplan & Texte', 'Monatlicher Report' ],
+        'reels4_q' => [ '4 Reels pro Monat', '1 Drehtag pro Quartal', 'Redaktionsplan, Schnitt & Veröffentlichung', 'Monatlicher Report' ],
+        'reels4_m' => [ '4 Reels pro Monat', 'Drehtag jeden Monat (frischer Content)', 'Redaktionsplan, Schnitt & Veröffentlichung', 'Monatlicher Report' ],
+        'reels8'   => [ '8 Reels pro Monat', '1 Drehtag alle 2 Monate', 'Redaktionsplan, Schnitt & Veröffentlichung', 'Monatlicher Report' ],
+    ];
+
+    /* ---- Optionaler Zusatz: Community-Management (eigener Posten) ---- */
+    private const SOCIAL_CM = [
+        'price' => 200,
+        'label' => 'Community-Management',
+        'desc'  => 'Kommentare & Nachrichten beantworten, Community moderieren und auf Bewertungen reagieren',
     ];
 
     /**
@@ -129,6 +136,18 @@ final class ProductPricing {
 
         $score = 50 + [ 'statisch' => 5, 'reels4_q' => 15, 'reels4_m' => 25, 'reels8' => 35 ][ $key ];
 
+        // Community-Management ist ein optionaler, separat berechneter Posten.
+        $cm = ( ( $quiz['social_cm'] ?? '' ) === 'ja' );
+        $addons = [];
+        if ( $cm ) {
+            $addons[] = [
+                'label' => self::SOCIAL_CM['label'],
+                'price' => (int) self::SOCIAL_CM['price'],
+                'desc'  => self::SOCIAL_CM['desc'],
+            ];
+        }
+        $gesamt = (int) $pkg['price'] + ( $cm ? (int) self::SOCIAL_CM['price'] : 0 );
+
         return [
             'product'           => 'social',
             'preis_min'         => 0,
@@ -138,6 +157,8 @@ final class ProductPricing {
             'monatlich_max'     => (int) $pkg['price'],
             'monatlich_from'    => false,
             'monatlich_note'    => 'monatlich kündbar · 10 % Rabatt bei jährlicher Vorauszahlung',
+            'monatlich_addons'  => $addons,
+            'monatlich_gesamt'  => $gesamt,
             'paket_label'       => $pkg['label'] . '-Paket',
             'recurring_items'   => self::SOCIAL_INCL[ $key ],
             'score'             => min( 100, $score ),

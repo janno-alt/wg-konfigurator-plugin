@@ -231,6 +231,21 @@ function ProductSidebar({ def, breakdown }) {
                   <li key={i}><span className="wgk__rec-check">✓</span>{it.label}</li>
                 ))}
               </ul>
+              {(breakdown.recurring.addons || []).map((ad, i) => (
+                <div key={i} className="wgk__rec-addon">
+                  <div className="wgk__rec-addon-head">
+                    <span className="wgk__rec-addon-label">+ {ad.label}</span>
+                    <span className="wgk__rec-addon-price">+{fmtEur(ad.price)} / Monat</span>
+                  </div>
+                  {ad.desc && <p className="wgk__rec-addon-desc">{ad.desc}</p>}
+                </div>
+              ))}
+              {breakdown.recurring.addons && breakdown.recurring.addons.length > 0 && (
+                <div className="wgk__rec-total">
+                  <span className="wgk__rec-total-label">Gesamt</span>
+                  <strong className="wgk__rec-total-value">{fmtEur(breakdown.recurring.gesamt)} / Monat</strong>
+                </div>
+              )}
               {breakdown.recurring.note && <p className="wgk__rec-note">{breakdown.recurring.note}</p>}
             </div>
           )}

@@ -19,11 +19,13 @@ const PRICES = {
     express_mult:   0.20,   // Express-Aufschlag auf Einmalkosten
   },
   social: {
-    statisch: { price: 300, label: 'Statisch',    incl: [ '6 statische Beiträge pro Monat', 'Redaktionsplan & Texte', 'Community-Management', 'Monatlicher Report' ] },
-    reels4_q: { price: 500, label: 'Reels Basis', incl: [ '4 Reels pro Monat', '1 Drehtag pro Quartal', 'Redaktionsplan, Schnitt & Veröffentlichung', 'Community-Management', 'Monatlicher Report' ] },
-    reels4_m: { price: 700, label: 'Reels Plus',  incl: [ '4 Reels pro Monat', 'Drehtag jeden Monat (frischer Content)', 'Redaktionsplan, Schnitt & Veröffentlichung', 'Community-Management', 'Monatlicher Report' ] },
-    reels8:   { price: 990, label: 'Reels Pro',   incl: [ '8 Reels pro Monat', '1 Drehtag alle 2 Monate', 'Redaktionsplan, Schnitt & Veröffentlichung', 'Community-Management', 'Monatlicher Report' ] },
+    statisch: { price: 300, label: 'Statisch',    incl: [ '6 statische Beiträge pro Monat', 'Redaktionsplan & Texte', 'Monatlicher Report' ] },
+    reels4_q: { price: 500, label: 'Reels Basis', incl: [ '4 Reels pro Monat', '1 Drehtag pro Quartal', 'Redaktionsplan, Schnitt & Veröffentlichung', 'Monatlicher Report' ] },
+    reels4_m: { price: 700, label: 'Reels Plus',  incl: [ '4 Reels pro Monat', 'Drehtag jeden Monat (frischer Content)', 'Redaktionsplan, Schnitt & Veröffentlichung', 'Monatlicher Report' ] },
+    reels8:   { price: 990, label: 'Reels Pro',   incl: [ '8 Reels pro Monat', '1 Drehtag alle 2 Monate', 'Redaktionsplan, Schnitt & Veröffentlichung', 'Monatlicher Report' ] },
   },
+  // Community-Management: optionaler, separat berechneter Zusatzposten.
+  socialCm: { price: 200, label: 'Community-Management', desc: 'Kommentare & Nachrichten beantworten, Community moderieren und auf Bewertungen reagieren' },
 };
 
 const BRANCHEN = [
@@ -161,7 +163,7 @@ const social = {
     flow: ['Umfang wählen', 'Paket-Empfehlung', 'PDF im Postfach'],
     cta: 'Konfigurator starten',
   },
-  initialAnswers: { paket: '', branche: '', website: '', ziel: '' },
+  initialAnswers: { paket: '', social_cm: 'nein', branche: '', website: '', ziel: '' },
   steps: [
     {
       key: 'paket', field: 'paket', type: 'single',
@@ -172,6 +174,15 @@ const social = {
         { id: 'reels4_q', label: '4 Reels / Monat', hint: 'Dreh alle 3 Monate, günstigster Reels-Einstieg', badge: 'beliebt' },
         { id: 'reels4_m', label: '4 Reels / Monat, frischer', hint: 'Drehtag jeden Monat für aktuellen Content' },
         { id: 'reels8', label: '8 Reels / Monat', hint: 'Maximale Reichweite, Dreh alle 2 Monate' },
+      ],
+    },
+    {
+      key: 'social_cm', field: 'social_cm', type: 'single',
+      title: 'Sollen wir auch euer Community-Management übernehmen?',
+      subtitle: 'Wir beantworten Kommentare und Nachrichten, moderieren die Community und reagieren auf Bewertungen – damit eure Kanäle nicht nur bespielt, sondern auch betreut werden.',
+      options: [
+        { id: 'ja', label: 'Ja, übernehmt das', hint: 'Kommentare & Nachrichten, Moderation, Bewertungen', badge: '+200 €/Monat' },
+        { id: 'nein', label: 'Nein, das machen wir selbst', hint: 'Ihr beantwortet Kommentare & Nachrichten selbst' },
       ],
     },
     {
@@ -197,6 +208,11 @@ const social = {
       return { ready: false, items: [], total_min: 0, total_max: 0, recurring: null };
     }
     const pkg = PRICES.social[a.paket];
+    const cm = a.social_cm === 'ja';
+    const addons = cm
+      ? [{ label: PRICES.socialCm.label, price: PRICES.socialCm.price, desc: PRICES.socialCm.desc }]
+      : [];
+    const gesamt = pkg.price + (cm ? PRICES.socialCm.price : 0);
     return {
       ready: true,
       items: [], total_min: 0, total_max: 0,
@@ -204,6 +220,8 @@ const social = {
         label: pkg.label + '-Paket',
         items: pkg.incl.map((t) => ({ label: t })),
         min: pkg.price, max: pkg.price, from: false,
+        addons,
+        gesamt,
         note: 'monatlich kündbar · 10 % Rabatt bei jährlicher Vorauszahlung',
       },
       type_label: 'Social-Media Betreuung · ' + pkg.label,

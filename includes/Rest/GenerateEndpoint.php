@@ -342,6 +342,7 @@ final class GenerateEndpoint {
             'rec_lp'       => sanitize_text_field( (string) ( $quiz_raw['rec_lp'] ?? '' ) ),
             // Social
             'paket'        => sanitize_text_field( (string) ( $quiz_raw['paket'] ?? '' ) ),
+            'social_cm'    => sanitize_text_field( (string) ( $quiz_raw['social_cm'] ?? '' ) ),
         ];
 
         $tracking = [

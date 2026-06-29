@@ -1173,3 +1173,33 @@
   color: var(--wgk-muted);
   line-height: 1.4;
 }
+.wgk .wgk__rec-addon {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(194, 242, 28, 0.35);
+}
+.wgk .wgk__rec-addon-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.wgk .wgk__rec-addon-label { font-size: 13px; font-weight: 600; color: var(--wgk-text, #d8d8d8); }
+.wgk .wgk__rec-addon-price { font-size: 13px; font-weight: 700; color: var(--wgk-accent); white-space: nowrap; }
+.wgk .wgk__rec-addon-desc {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: var(--wgk-muted);
+  line-height: 1.4;
+}
+.wgk .wgk__rec-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(194, 242, 28, 0.5);
+}
+.wgk .wgk__rec-total-label { font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--wgk-muted); }
+.wgk .wgk__rec-total-value { font-size: 18px; font-weight: 700; color: var(--wgk-accent); white-space: nowrap; }

@@ -92,7 +92,7 @@ export default function Intro({ lead, setLead, onStart, starting, error, copy })
             autoComplete="tel"
           />
           <span style={{ display: 'block', marginTop: '4px', fontSize: '12px', color: '#9a9a9a' }}>
-            Nur falls du lieber direkt sprichst — wir rufen nicht ungefragt an.
+            Für schnellere Rückfragen zu deiner Anfrage.
           </span>
         </label>
 

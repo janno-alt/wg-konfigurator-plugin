@@ -188,6 +188,29 @@ $fmt_eur = static function ( $n ): string {
     </div>
     <?php endif; ?>
 
+    <?php /* Optionale monatliche Zusatzleistungen (z. B. Community-Management) – eigener Posten */ ?>
+    <?php foreach ( (array) ( $pricing['monatlich_addons'] ?? [] ) as $ad ) : ?>
+    <div class="pricebox">
+        <div class="label"><?php echo esc_html( (string) ( $ad['label'] ?? '' ) ); ?> &middot; Zusatzleistung</div>
+        <div class="value">
+            + <?php echo esc_html( $fmt_eur( $ad['price'] ?? 0 ) ); ?>
+            <span style="font-size:12pt;color:#bbb;">/ Monat</span>
+        </div>
+        <?php if ( ! empty( $ad['desc'] ) ) : ?>
+            <p class="note" style="margin-top:8pt;"><?php echo esc_html( (string) $ad['desc'] ); ?></p>
+        <?php endif; ?>
+    </div>
+    <?php endforeach; ?>
+
+    <?php if ( ! empty( $pricing['monatlich_addons'] ) && (int) ( $pricing['monatlich_gesamt'] ?? 0 ) > 0 ) : ?>
+    <table class="kv">
+        <tr>
+            <td class="k" style="text-transform:none;letter-spacing:0;color:#CCC;font-size:11pt;width:65%;">Gesamt pro Monat</td>
+            <td class="v" style="text-align:right;font-weight:700;color:<?php echo esc_attr( $brand ); ?>;font-size:13pt;"><?php echo esc_html( $fmt_eur( $pricing['monatlich_gesamt'] ) ); ?> / Monat</td>
+        </tr>
+    </table>
+    <?php endif; ?>
+
     <?php if ( ! empty( $pricing['items'] ) ) : ?>
     <h3>Aufschlüsselung</h3>
     <table class="kv">
