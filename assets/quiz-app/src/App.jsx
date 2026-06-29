@@ -6,6 +6,7 @@ import Loading from './Loading.jsx';
 import PriceSidebar from './PriceSidebar.jsx';
 import AppProduct from './AppProduct.jsx';
 import { recommend } from './recommendation.js';
+import { pushKonfiguratorLead } from './track.js';
 
 const STEPS = ['goal', 'branche', 'channels', 'zeitrahmen', 'configure', 'kontext'];
 
@@ -172,6 +173,8 @@ export default function App({ theme = 'dark', product = 'video' }) {
           preis_max: data.preis_max,
         });
       } catch (e) { /* noop */ }
+      // Lead-Event fürs GTM-/Microsoft-Ads-Tracking (gehashte PII vom Server).
+      pushKonfiguratorLead(data);
     } catch (e) {
       setError(e.message);
       setPhase('quiz');

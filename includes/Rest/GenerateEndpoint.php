@@ -309,6 +309,12 @@ final class GenerateEndpoint {
             'preis_max'         => $pricing['preis_max'],
             'express_aufschlag' => $pricing['express_aufschlag'],
             'naechste_schritte' => $concept['naechste_schritte'] ?? '',
+            // dataLayer-Tracking (gehashte PII + Conversion-Wert) für GTM/Microsoft Ads.
+            'tracking'          => [
+                'user_data' => $this->tracking_user_data( $lead ),
+                'value'     => (int) ( $pricing['preis_min'] ?? 0 ),
+                'currency'  => 'EUR',
+            ],
         ], 200 );
     }
 
@@ -438,6 +444,12 @@ final class GenerateEndpoint {
             return new WP_Error( 'pipeline_error', 'Etwas ist schiefgelaufen. Wir wurden benachrichtigt.', [ 'status' => 500 ] );
         }
 
+        // Conversion-Wert: Recruiting = einmaliger "ab"-Preis, Social = Monatspreis (inkl. Zusatz).
+        $track_value = (int) ( $pricing['preis_min'] ?? 0 );
+        if ( $track_value <= 0 ) {
+            $track_value = (int) ( $pricing['monatlich_gesamt'] ?? $pricing['monatlich_min'] ?? 0 );
+        }
+
         return new WP_REST_Response( [
             'ok'                => true,
             'product'           => $product,
@@ -451,7 +463,66 @@ final class GenerateEndpoint {
             'monatlich_note'    => $pricing['monatlich_note'],
             'paket_label'       => $pricing['paket_label'],
             'naechste_schritte' => $concept['naechste_schritte'] ?? '',
+            // dataLayer-Tracking (gehashte PII + Conversion-Wert) für GTM/Microsoft Ads.
+            'tracking'          => [
+                'user_data' => $this->tracking_user_data( $lead ),
+                'value'     => $track_value,
+                'currency'  => 'EUR',
+            ],
         ], 200 );
+    }
+
+    /**
+     * Baut das gehashte wg_user_data-Objekt für den dataLayer-Push (Microsoft Ads / Meta).
+     * Normalisierung nach Advanced-Matching-Standard, Ausgabe als SHA-256 Hex (lowercase).
+     * Nur Schlüssel mit Wert werden gesetzt; Klartext verlässt den Server NICHT.
+     *
+     * @param array<string,mixed> $lead
+     * @return array<string,string>
+     */
+    private function tracking_user_data( array $lead ): array {
+        $ud = [];
+
+        $email = mb_strtolower( trim( (string) ( $lead['email'] ?? '' ) ) );
+        if ( $email !== '' ) {
+            $ud['em'] = hash( 'sha256', $email );
+        }
+
+        $phone = $this->normalize_phone( (string) ( $lead['telefon'] ?? '' ) );
+        if ( $phone !== '' ) {
+            $ud['ph'] = hash( 'sha256', $phone );
+        }
+
+        $fn = mb_strtolower( trim( (string) ( $lead['vorname'] ?? '' ) ) );
+        if ( $fn !== '' ) {
+            $ud['fn'] = hash( 'sha256', $fn );
+        }
+
+        $ln = mb_strtolower( trim( (string) ( $lead['nachname'] ?? '' ) ) );
+        if ( $ln !== '' ) {
+            $ud['ln'] = hash( 'sha256', $ln );
+        }
+
+        return $ud;
+    }
+
+    /**
+     * Telefon auf E.164-Ziffern ohne "+" normalisieren (DE-Standard):
+     * nur Ziffern, Ländervorwahl 49 voranstellen, führende nationale 0 entfernen.
+     */
+    private function normalize_phone( string $phone ): string {
+        $digits = preg_replace( '/\D+/', '', $phone );
+        if ( ! is_string( $digits ) || $digits === '' ) {
+            return '';
+        }
+        if ( str_starts_with( $digits, '00' ) ) {
+            $digits = substr( $digits, 2 );            // internationales 00-Präfix
+        } elseif ( str_starts_with( $digits, '0' ) ) {
+            $digits = '49' . substr( $digits, 1 );     // nationale 0 → DE-Vorwahl
+        } elseif ( ! str_starts_with( $digits, '49' ) ) {
+            $digits = '49' . $digits;                  // keine Vorwahl → DE annehmen
+        }
+        return $digits;
     }
 
     /** Trägt einwilligende Leads (marketing_opt_in) in die MailPoet-Liste ein – DOI macht MailPoet. */

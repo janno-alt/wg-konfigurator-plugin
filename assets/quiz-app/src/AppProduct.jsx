@@ -3,6 +3,7 @@ import Intro from './Intro.jsx';
 import Loading from './Loading.jsx';
 import Result from './Result.jsx';
 import { getProduct, fmtEur, fmtRange } from './productConfig.js';
+import { pushKonfiguratorLead } from './track.js';
 
 /**
  * Orchestrator für die Nicht-Video-Produkte (recruiting, social).
@@ -89,6 +90,8 @@ export default function AppProduct({ theme = 'dark', product }) {
           monatlich_max: data.monatlich_max || 0,
         });
       } catch (e) { /* noop */ }
+      // Lead-Event fürs GTM-/Microsoft-Ads-Tracking (gehashte PII vom Server).
+      pushKonfiguratorLead(data);
     } catch (e) {
       setError(e.message); setPhase('quiz');
     } finally {
