@@ -197,7 +197,7 @@ const social = {
     eyebrow: 'Dein Paket',
     title: 'Social-Media Betreuung',
     emptyHint: 'Wähle deinen Content-Umfang, dann siehst du hier dein Paket und den Monatspreis.',
-    inclText: 'Alle Pakete laufen monatlich und sind mit einem Monat zum Monatsende kündbar. 10 % Rabatt bei jährlicher Vorauszahlung. Alle Preise netto, zzgl. MwSt.',
+    inclText: 'Alle Pakete laufen monatlich und sind mit einem Monat zum Monatsende kündbar. Alle Preise netto, zzgl. MwSt.',
   },
   result: {
     headline: 'Deine Paket-Empfehlung ist unterwegs.',
@@ -222,7 +222,7 @@ const social = {
         min: pkg.price, max: pkg.price, from: false,
         addons,
         gesamt,
-        note: 'monatlich kündbar · 10 % Rabatt bei jährlicher Vorauszahlung',
+        note: 'monatlich kündbar',
       },
       type_label: 'Social-Media Betreuung · ' + pkg.label,
     };

@@ -156,7 +156,7 @@ final class ProductPricing {
             'monatlich_min'     => (int) $pkg['price'],
             'monatlich_max'     => (int) $pkg['price'],
             'monatlich_from'    => false,
-            'monatlich_note'    => 'monatlich kündbar · 10 % Rabatt bei jährlicher Vorauszahlung',
+            'monatlich_note'    => 'monatlich kündbar',
             'monatlich_addons'  => $addons,
             'monatlich_gesamt'  => $gesamt,
             'paket_label'       => $pkg['label'] . '-Paket',
