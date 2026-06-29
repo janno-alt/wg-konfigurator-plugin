@@ -37,6 +37,19 @@ final class Shortcode {
             ? $atts['product']
             : 'video';
 
+        // Im Elementor-Editor/Vorschau-iframe die React-App NICHT laden — sie
+        // blockiert sonst das Vorschau-iframe und damit den gesamten Editor
+        // ("Wird geladen" / abgesicherter Modus). Stattdessen ein Platzhalter.
+        if ( $this->is_elementor_editor() ) {
+            return sprintf(
+                '<div style="padding:48px 24px;border:1px dashed #C2F21C;border-radius:14px;background:#141414;color:#FBFBFB;text-align:center;font-family:sans-serif;">'
+                . '<div style="font-weight:700;font-size:16px;margin-bottom:6px;">WG-Konfigurator (%s)</div>'
+                . '<div style="color:#9a9a9a;font-size:13px;">Interaktiver Konfigurator &ndash; wird im Live-Frontend angezeigt.</div>'
+                . '</div>',
+                esc_html( $product )
+            );
+        }
+
         $build_dir = WG_KONFIGURATOR_DIR . 'assets/quiz-app/dist/';
         $build_url = WG_KONFIGURATOR_URL . 'assets/quiz-app/dist/';
 
@@ -102,6 +115,24 @@ final class Shortcode {
             esc_attr( $atts['compact'] ),
             esc_attr( $product )
         );
+    }
+
+    /**
+     * Läuft der Shortcode gerade im Elementor-Editor oder dessen Vorschau-iframe?
+     * Dann darf die React-App nicht geladen werden (blockiert den Editor).
+     */
+    private function is_elementor_editor(): bool {
+        if ( ! class_exists( '\Elementor\Plugin' ) ) {
+            return false;
+        }
+        $e = \Elementor\Plugin::$instance;
+        if ( isset( $e->editor ) && method_exists( $e->editor, 'is_edit_mode' ) && $e->editor->is_edit_mode() ) {
+            return true;
+        }
+        if ( isset( $e->preview ) && method_exists( $e->preview, 'is_preview_mode' ) && $e->preview->is_preview_mode() ) {
+            return true;
+        }
+        return false;
     }
 
     private function find_asset( string $dir, string $subdir, string $ext ): ?string {
