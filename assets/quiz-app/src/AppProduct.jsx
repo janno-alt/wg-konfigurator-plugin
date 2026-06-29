@@ -206,14 +206,14 @@ function ProductSidebar({ def, breakdown }) {
                   <li key={it.key} className="wgk__pricesidebar-item">
                     <span className="wgk__pricesidebar-item-label">{it.label}</span>
                     <span className="wgk__pricesidebar-item-value">
-                      {it.min === it.max ? fmtEur(it.min) : `${fmtEur(it.min)} – ${fmtEur(it.max)}`}
+                      {it.from ? 'ab ' : ''}{it.min === it.max ? fmtEur(it.min) : `${fmtEur(it.min)} – ${fmtEur(it.max)}`}
                     </span>
                   </li>
                 ))}
               </ul>
               <div className="wgk__pricesidebar-total">
                 <span className="wgk__pricesidebar-total-label">Einmalig netto</span>
-                <strong className="wgk__pricesidebar-total-value">{fmtRange(breakdown.total_min, breakdown.total_max)}</strong>
+                <strong className="wgk__pricesidebar-total-value">{breakdown.einmalig_from ? 'ab ' : ''}{fmtRange(breakdown.total_min, breakdown.total_max)}</strong>
               </div>
             </>
           )}

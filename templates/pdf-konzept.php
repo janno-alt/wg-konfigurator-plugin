@@ -42,14 +42,22 @@ $fmt_eur = static function ( $n ): string {
 <title><?php echo esc_html( $doc_title ); ?> – <?php echo esc_html( $lead['vorname'] ?? 'Kunde' ); ?></title>
 <style>
     @page { margin: 0; size: A4 portrait; }
-    /* dompdf: html-Background füllt JEDE Seite zuverlässig (body-bg hat Macken). */
-    html { background-color: <?php echo esc_attr( $bg ); ?>; }
     body, html { margin: 0; padding: 0; }
+
+    /* Voll-Bleed-Hintergrund auf JEDER Seite: ein position:fixed-Element wird von
+       dompdf auf jedem Blatt wiederholt und liegt (zuerst im Quelltext) hinter
+       dem Inhalt. Das verhindert die weißen Balken auf kurzen Seiten – der
+       html/body-Background kachelt in dompdf NICHT zuverlässig über alle Seiten. */
+    .page-bg {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        width: 210mm; height: 297mm;
+        background-color: <?php echo esc_attr( $bg ); ?>;
+    }
 
     .page {
         page-break-after: always;
         padding: 26mm 22mm 30mm;   /* unten extra Platz für den Canvas-Footer */
-        background-color: <?php echo esc_attr( $bg ); ?>;
         color: #FBFBFB;
         font-family: 'DejaVu Sans', sans-serif;
         font-size: 11pt;
@@ -119,6 +127,8 @@ $fmt_eur = static function ( $n ): string {
 </head>
 <body>
 
+<div class="page-bg"></div>
+
 <!-- ============== SEITE 1: Cover ============== -->
 <div class="page">
     <div class="cover-header"></div>
@@ -146,9 +156,11 @@ $fmt_eur = static function ( $n ): string {
     <div class="pricebox">
         <div class="label"><?php echo $is_video ? 'Investitionsrahmen (geschätzt)' : 'Einmalige Leistungen (geschätzt)'; ?></div>
         <div class="value">
-            <?php echo esc_html( $fmt_eur( $pricing['preis_min'] ?? 0 ) ); ?>
-            &nbsp;–&nbsp;
-            <?php echo esc_html( $fmt_eur( $pricing['preis_max'] ?? 0 ) ); ?>
+            <?php if ( (int) ( $pricing['preis_min'] ?? 0 ) === (int) ( $pricing['preis_max'] ?? 0 ) ) : ?>
+                <?php echo ! empty( $pricing['einmalig_from'] ) ? 'ab ' : ''; ?><?php echo esc_html( $fmt_eur( $pricing['preis_min'] ?? 0 ) ); ?>
+            <?php else : ?>
+                <?php echo esc_html( $fmt_eur( $pricing['preis_min'] ?? 0 ) ); ?>&nbsp;–&nbsp;<?php echo esc_html( $fmt_eur( $pricing['preis_max'] ?? 0 ) ); ?>
+            <?php endif; ?>
         </div>
         <p class="note" style="margin-top:8pt;">
             <?php if ( $is_video ) : ?>
@@ -180,8 +192,9 @@ $fmt_eur = static function ( $n ): string {
     <h3>Aufschlüsselung</h3>
     <table class="kv">
         <?php foreach ( (array) ( $pricing['items'] ?? [] ) as $it ) :
+            $it_from = ! empty( $it['from'] ) ? 'ab ' : '';
             $val = ( (int) $it['min'] === (int) $it['max'] )
-                ? number_format( (int) $it['min'], 0, ',', '.' ) . ' €'
+                ? $it_from . number_format( (int) $it['min'], 0, ',', '.' ) . ' €'
                 : number_format( (int) $it['min'], 0, ',', '.' ) . ' – ' . number_format( (int) $it['max'], 0, ',', '.' ) . ' €';
         ?>
             <tr>

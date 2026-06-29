@@ -111,15 +111,15 @@ const recruiting = {
   },
   computeBreakdown(a) {
     const P = PRICES.recruiting;
-    const triple = P.video_base + 2 * P.stelle_add; // ab 3 Stellen
+    // 1-2 Stellen: fester Abpreis "ab 2.000 €". 3plus/dauerhaft: Spanne 2.750–3.500 € (+750 € on top).
     const STELLEN = {
-      '1-2':       { min: P.video_base, max: P.video_base + P.stelle_add, label: 'Recruiting-Video inkl. Konzept (1 bis 2 Stellen)' },
-      '3plus':     { min: triple, max: triple, label: 'Recruiting-Video inkl. Konzept (ab 3 Stellen, je weitere +750 €)' },
-      'dauerhaft': { min: triple, max: triple, label: 'Recruiting-Video inkl. Konzept (dauerhaft, Volumen-Paket ab)' },
+      '1-2':       { min: P.video_base, max: P.video_base, from: true,  label: 'Recruiting-Video inkl. Konzept (1 bis 2 Stellen)' },
+      '3plus':     { min: P.video_base + P.stelle_add, max: P.video_base + 2 * P.stelle_add, from: false, label: 'Recruiting-Video inkl. Konzept (ab 3 Stellen, je weitere +750 €)' },
+      'dauerhaft': { min: P.video_base + P.stelle_add, max: P.video_base + 2 * P.stelle_add, from: false, label: 'Recruiting-Video inkl. Konzept (dauerhaft mehrere, je weitere +750 €)' },
     };
     const base = STELLEN[a.stellen] || STELLEN['1-2'];
     const items = [];
-    items.push({ key: 'base', label: base.label, min: base.min, max: base.max });
+    items.push({ key: 'base', label: base.label, min: base.min, max: base.max, from: base.from });
 
     if (a.rec_lp === 'ja') {
       items.push({ key: 'lp', label: '+ Bewerber-Landingpage', min: P.landingpage, max: P.landingpage });
@@ -147,7 +147,7 @@ const recruiting = {
         note: 'monatliche Betreuung, zzgl. Werbebudget (bestimmt ihr selbst)',
       };
     }
-    return { ready: true, items, total_min: one_min, total_max: one_max, recurring, type_label: 'Recruiting-Paket' };
+    return { ready: true, items, total_min: one_min, total_max: one_max, recurring, einmalig_from: base.from && one_min === one_max, type_label: 'Recruiting-Paket' };
   },
 };
 

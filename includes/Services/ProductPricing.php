@@ -52,21 +52,27 @@ final class ProductPricing {
     private function calc_recruiting( array $quiz ): array {
         $P = self::REC;
         $stellen = (string) ( $quiz['stellen'] ?? '' );
-        $triple  = $P['video_base'] + 2 * $P['stelle_add']; // ab 3 Stellen
 
-        $base_min   = $P['video_base'];
-        $base_max   = $P['video_base'] + $P['stelle_add'];
+        // 1-2 Stellen: fester Abpreis "ab 2.000 €". 3plus/dauerhaft: Spanne
+        // 2.750 € – 3.500 € (Basis + je weitere Stelle +750 € on top).
+        $base_from  = true;
+        $base_min   = $P['video_base'];                       // 2000
+        $base_max   = $P['video_base'];                       // 2000 (Festpreis "ab")
         $base_label = 'Recruiting-Video inkl. Konzept (1 bis 2 Stellen)';
         if ( $stellen === '3plus' ) {
-            $base_min = $base_max = $triple;
+            $base_from  = false;
+            $base_min   = $P['video_base'] + $P['stelle_add'];        // 2750
+            $base_max   = $P['video_base'] + 2 * $P['stelle_add'];    // 3500
             $base_label = 'Recruiting-Video inkl. Konzept (ab 3 Stellen, je weitere +750 €)';
         } elseif ( $stellen === 'dauerhaft' ) {
-            $base_min = $base_max = $triple;
-            $base_label = 'Recruiting-Video inkl. Konzept (dauerhaft, Volumen-Paket ab)';
+            $base_from  = false;
+            $base_min   = $P['video_base'] + $P['stelle_add'];        // 2750
+            $base_max   = $P['video_base'] + 2 * $P['stelle_add'];    // 3500
+            $base_label = 'Recruiting-Video inkl. Konzept (dauerhaft mehrere, je weitere +750 €)';
         }
 
         $items = [];
-        $items[] = [ 'key' => 'base', 'label' => $base_label, 'min' => $base_min, 'max' => $base_max ];
+        $items[] = [ 'key' => 'base', 'label' => $base_label, 'min' => $base_min, 'max' => $base_max, 'from' => $base_from ];
 
         if ( ( $quiz['rec_lp'] ?? '' ) === 'ja' ) {
             $items[] = [ 'key' => 'lp', 'label' => '+ Bewerber-Landingpage', 'min' => $P['landingpage'], 'max' => $P['landingpage'] ];
@@ -99,6 +105,7 @@ final class ProductPricing {
             'product'           => 'recruiting',
             'preis_min'         => (int) $one_min,
             'preis_max'         => (int) $one_max,
+            'einmalig_from'     => ( $base_from && (int) $one_min === (int) $one_max ),
             'express_aufschlag' => (int) $express,
             'monatlich_min'     => (int) $monat,
             'monatlich_max'     => (int) $monat,
