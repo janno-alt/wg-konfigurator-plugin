@@ -1,6 +1,6 @@
 # Composer
 /vendor/
-composer.lock
+# composer.lock wird committet, damit jeder Build dieselben Paketversionen nutzt.
 
 # Node / Vite
 node_modules/

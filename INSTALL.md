@@ -60,6 +60,10 @@ Ein Release entsteht ausschließlich dadurch, dass ein Versions-Tag gepusht wird
 
 Die Action bricht ab, wenn die Version im Tag nicht exakt mit der Version im Plugin-Kopf und in der Konstante übereinstimmt. Das Asset heißt immer `wg-konfigurator.zip` und enthält den Wurzelordner `wg-konfigurator`, damit bestehende Installationen beim Update im selben Ordner bleiben. Tags mit Bindestrich wie `v0.14.0-beta.1` werden als Vorabversion veröffentlicht und von den Update-Prüfungen nicht als reguläres Update angeboten.
 
+Die Composer-Pakete kommen aus der committeten `composer.lock`. Die Action löst also keine neuen Versionen auf, sondern baut immer genau den getesteten Stand. In `composer.json` ist unter `config.platform` PHP 8.1 eingetragen, damit keine Pakete in die Zip gelangen, die eine neuere PHP-Version verlangen. Paket-Updates spielst du bewusst lokal mit `composer update` ein, prüfst sie und committest danach die neue `composer.lock`.
+
+Über „Actions, Release Plugin ZIP, Run workflow“ kannst du den Build als Probelauf starten. Dabei entsteht nur die Zip als Artefakt der Action, aber kein Release.
+
 Der Plugin-Kopf enthält die Zeile `Update URI: https://wg-digitalmarketing.de/wg-suite/wg-konfigurator`. Dadurch fragt WordPress nie bei wordpress.org nach Updates für dieses Plugin, sondern überlässt die Update-Meldung der WG Suite und dem eingebauten Plugin Update Checker.
 
 ### Privates Repo?
