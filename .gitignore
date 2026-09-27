@@ -4,6 +4,7 @@ composer.lock
 
 # Node / Vite
 node_modules/
+dist/
 assets/quiz-app/node_modules/
 assets/quiz-app/dist/
 .cache/
@@ -21,8 +22,7 @@ Thumbs.db
 !assets/quiz-app/build/
 
 # Secrets — never commit
-.env
-.env.local
+.env*
 *.pem
 *.key
 wp-config-local.php
@@ -35,3 +35,6 @@ storage/
 
 # Logs
 *.log
+
+# Release-Zips (entstehen in der GitHub Action)
+*.zip

@@ -3,11 +3,12 @@
  * Plugin Name:       WG Konfigurator
  * Plugin URI:        https://github.com/janno-alt/wg-konfigurator-plugin
  * Description:       Konfigurator (Video, Recruiting, Social): Quiz-Wizard, KI-generiertes Konzept (Gemini), PDF-Auslieferung, CRM-Webhook.
- * Version:           0.13.8
+ * Version:           0.13.9
  * Requires at least: 6.4
  * Requires PHP:      8.1
  * Author:            WG-Digital
  * Author URI:        https://wg-digitalmarketing.de
+ * Update URI:        https://wg-digitalmarketing.de/wg-suite/wg-konfigurator
  * License:           Proprietary
  * Text Domain:       wg-konfigurator
  * Domain Path:       /languages
@@ -22,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // ---------- Constants ----------
-define( 'WG_KONFIGURATOR_VERSION', '0.13.8' );
+define( 'WG_KONFIGURATOR_VERSION', '0.13.9' );
 define( 'WG_KONFIGURATOR_FILE', __FILE__ );
 define( 'WG_KONFIGURATOR_DIR', plugin_dir_path( __FILE__ ) );
 define( 'WG_KONFIGURATOR_URL', plugin_dir_url( __FILE__ ) );

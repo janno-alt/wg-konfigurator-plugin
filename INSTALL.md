@@ -50,76 +50,17 @@ Das Plugin checkt GitHub auf neue Releases (über [Plugin Update Checker](https:
 Sobald du ein neues Release published, erscheint in WP unter **Plugins** ein
 Update-Hinweis und es kann **direkt im WP-Admin per Klick** aktualisiert werden.
 
-### Release-Prozess (manuell)
+### Release-Prozess (über Git gesteuert)
 
-1. **Version bump:** `wg-konfigurator.php` → `Version:` Zeile + `WG_KONFIGURATOR_VERSION`-Konstante
-2. **Build:** Schritte 1+2 oben
-3. **Commit + Tag:**
-   ```bash
-   git add . && git commit -m "Release v0.2.0"
-   git tag v0.2.0
-   git push && git push --tags
-   ```
-4. **GitHub → Releases → Draft a new release** für `v0.2.0` → ZIP aus Schritt 2 als Asset hochladen → Publish.
+Ein Release entsteht ausschließlich dadurch, dass ein Versions-Tag gepusht wird. Die GitHub Action in `.github/workflows/release.yml` baut daraus die Zip und hängt sie an ein GitHub-Release.
 
-### Release-Prozess (automatisch via GitHub Actions)
+1. Setze die neue Version an beiden Stellen in `wg-konfigurator.php`, also in der Zeile `Version:` im Plugin-Kopf und in der Konstante `WG_KONFIGURATOR_VERSION`.
+2. Committe die Änderung und pushe sie auf `main`.
+3. Setze den passenden Tag und pushe ihn, zum Beispiel `git tag v0.14.0 && git push origin v0.14.0`.
 
-Lege `.github/workflows/release.yml` an (siehe unten). Bei jedem `git tag v*.*.*`
-baut die Action das Release-ZIP und published das Release automatisch.
+Die Action bricht ab, wenn die Version im Tag nicht exakt mit der Version im Plugin-Kopf und in der Konstante übereinstimmt. Das Asset heißt immer `wg-konfigurator.zip` und enthält den Wurzelordner `wg-konfigurator`, damit bestehende Installationen beim Update im selben Ordner bleiben. Tags mit Bindestrich wie `v0.14.0-beta.1` werden als Vorabversion veröffentlicht und von den Update-Prüfungen nicht als reguläres Update angeboten.
 
-```yaml
-name: Release Plugin ZIP
-
-on:
-  push:
-    tags: ['v*.*.*']
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.2'
-          tools: composer
-
-      - run: composer install --no-dev --optimize-autoloader
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: assets/quiz-app/package.json
-
-      - run: npm install
-        working-directory: assets/quiz-app
-
-      - run: npm run build
-        working-directory: assets/quiz-app
-
-      - name: Build plugin ZIP
-        run: |
-          STAGE="$RUNNER_TEMP/wg-konfigurator"
-          mkdir -p "$STAGE"
-          rsync -av --exclude=.git --exclude=.github --exclude=node_modules \
-                --exclude=assets/quiz-app/node_modules \
-                --exclude=assets/quiz-app/src \
-                --exclude=assets/quiz-app/vite.config.js \
-                --exclude='assets/quiz-app/package*.json' \
-                --exclude=assets/quiz-app/index.html \
-                --exclude=composer.json --exclude=composer.lock \
-                --exclude=INSTALL.md --exclude=docs \
-                ./ "$STAGE/"
-          cd "$RUNNER_TEMP"
-          zip -r "$GITHUB_WORKSPACE/wg-konfigurator-${GITHUB_REF_NAME}.zip" wg-konfigurator
-
-      - uses: softprops/action-gh-release@v2
-        with:
-          files: wg-konfigurator-*.zip
-          generate_release_notes: true
-```
+Der Plugin-Kopf enthält die Zeile `Update URI: https://wg-digitalmarketing.de/wg-suite/wg-konfigurator`. Dadurch fragt WordPress nie bei wordpress.org nach Updates für dieses Plugin, sondern überlässt die Update-Meldung der WG Suite und dem eingebauten Plugin Update Checker.
 
 ### Privates Repo?
 
